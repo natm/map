@@ -70,6 +70,26 @@
     {
       "type": "Feature",
       "properties": {
+        "id": "C2-ENC",
+        "name": "2 The Cottage: outdoor LC enclosure",
+        "type": "patch_point",
+        "enclosure": "cabinet",
+        "cables": "F05, F06",
+        "notes": "Outdoor enclosure on the outside of 2 The Cottage with 16 LC connectors. F05 (2 fibres) and F06 (1 fibre) are spliced to 3 of them. Whether F04 and F07 also end here is not yet confirmed.",
+        "source": "Nat (contents); position is the shared start of F05 and F06 as drawn",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 5,
+        "doc": "fibre.md#locations-patch-points"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067976, 51.938353]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "id": "TDR-WB",
         "name": "Ty Di rif: LC wall box",
         "type": "patch_point",
