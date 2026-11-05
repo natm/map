@@ -81,9 +81,7 @@
         "surveyed": "2026-11-05",
         "accuracy_m": 5,
         "doc": "fibre.md#locations-patch-points",
-        "photos": [
-          "c2-enc-2026-11-05.jpg"
-        ]
+        "photos": ["c2-enc-2026-11-05.jpg", "c2-enc-inside-2026-11-05.jpg"]
       },
       "geometry": {
         "type": "Point",

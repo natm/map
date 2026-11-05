@@ -152,10 +152,13 @@
   }
 
   function popupHtml(p) {
-    var pics = (Array.isArray(p.photos) ? p.photos : []).map(function (f) {
+    // Photos: a swipeable strip (one per view), each opens full size when tapped.
+    var list = Array.isArray(p.photos) ? p.photos : [];
+    var pics = list.map(function (f, i) {
       var src = 'photos/' + encodeURIComponent(f);
-      return '<a href="' + src + '" target="_blank" rel="noopener"><img class="photo" src="' + src + '" alt="' + esc(p.name || f) + '" loading="lazy"></a>';
+      return '<a href="' + src + '" target="_blank" rel="noopener"><img class="photo" src="' + src + '" alt="' + esc((p.name || f) + ' photo ' + (i + 1)) + '" loading="lazy"></a>';
     }).join('');
+    if (pics) pics = '<div class="photos">' + pics + '</div>' + (list.length > 1 ? '<div class="photo-count">' + list.length + ' photos: swipe sideways · tap to enlarge</div>' : '');
     var rows = Object.keys(p).filter(function (k) { return k !== 'photos'; }).map(function (k) {
       var v = p[k];
       if (v === null || v === undefined) v = '';
