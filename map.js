@@ -151,14 +151,32 @@
     });
   }
 
-  function popupHtml(p) {
+  function thumbsHtml(p) {
     // Photos: a row of small thumbnails; tapping one opens the photo viewer.
     var list = Array.isArray(p.photos) ? p.photos : [];
     var pics = list.map(function (f, i) {
       var src = 'photos/' + encodeURIComponent(f);
       return '<img class="thumb" src="' + src + '" alt="' + esc((p.name || f) + ' photo ' + (i + 1)) + '" data-photos="' + esc(list.join('|')) + '" data-i="' + i + '" loading="lazy">';
     }).join('');
-    if (pics) pics = '<div class="thumbs">' + pics + '</div>';
+    return pics ? '<div class="thumbs">' + pics + '</div>' : '';
+  }
+
+  // Other point features within a couple of metres (e.g. a manhole and the splice closure inside it).
+  var points = [];   // {p, latlng}
+  function alsoHere(p, latlng) {
+    if (!latlng) return '';
+    var near = points.filter(function (x) { return x.p !== p && x.latlng.distanceTo(latlng) < 2; });
+    if (!near.length) return '';
+    return '<div class="also"><div class="also-h">Also here</div>' + near.map(function (x) {
+      var q = x.p;
+      return '<div class="also-item"><a href="#feature=' + esc(q.id) + '" class="also-name">' + esc(q.name || q.id) + '</a>' +
+        (q.type ? ' <span class="also-type">' + esc(q.type) + '</span>' : '') + thumbsHtml(q) +
+        (window.FibreNet ? window.FibreNet.popupExtras(q) : '') + '</div>';
+    }).join('') + '</div>';
+  }
+
+  function popupHtml(p, latlng) {
+    var pics = thumbsHtml(p);
     var rows = Object.keys(p).filter(function (k) { return k !== 'photos'; }).map(function (k) {
       var v = p[k];
       if (v === null || v === undefined) v = '';
@@ -171,7 +189,7 @@
     });
     var title = p.name ? '<strong>' + esc(p.name) + '</strong>' : '';
     var extras = window.FibreNet ? window.FibreNet.popupExtras(p) : '';
-    return title + pics + extras + '<table class="props">' + rows.join('') + '</table>';
+    return title + pics + extras + alsoHere(p, latlng) + '<table class="props">' + rows.join('') + '</table>';
   }
 
   // ---- #feature=<id>: open that item's popup (shareable links) ----
@@ -303,8 +321,9 @@
           onEachFeature: function (f, layer) {
             var p = f.properties || {};
             if (p.id) featureById[p.id] = layer;
+            if (layer.getLatLng) points.push({ p: p, latlng: layer.getLatLng() });
             layer.bindPopup(function () {
-              return popupHtml(p);
+              return popupHtml(p, layer.getLatLng ? layer.getLatLng() : null);
             }, { maxWidth: 320, minWidth: 50, maxHeight: Math.max(220, Math.round(window.innerHeight * 0.55)), autoPanPadding: [20, 20] });
             var gt = f.geometry && f.geometry.type;
             if (gt === 'LineString' || gt === 'MultiLineString') {

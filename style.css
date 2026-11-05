@@ -117,3 +117,10 @@ body {
 .fx-cable { display: flex; align-items: center; min-height: 54px; margin-left: 24px; }
 .fx-line { width: 0; align-self: stretch; border-left: 4px solid; margin-right: 12px; }
 .fx-clabel { font-size: 12px; }
+
+/* Co-located items in a popup */
+.also { border: 1px solid #cfd8dc; border-radius: 6px; padding: 4px 8px; margin: 6px 0; background: #f7f9fa; }
+.also-h { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: .04em; }
+.also-item { margin: 4px 0; }
+.also-name { font-weight: 600; }
+.also-type { font-size: 11px; color: #666; }
