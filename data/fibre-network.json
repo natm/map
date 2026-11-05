@@ -2,11 +2,37 @@
   "about": "Fibre network model for the site map: cables, enclosures (panels, devices) and what is joined to what inside each one. Splice and trace diagrams on natm.github.io/map are drawn from this file, and scripts/fibre-network.py writes the Mermaid path diagrams in fibre.md from it. Format: map/README.md#fibre-network. PUBLIC: no VLANs, switch ports or IP addresses.",
   "updated": "2026-11-05",
   "cables": {
-    "F03": { "name": "Shed to woods pole", "fibres": 24, "tube_size": 12, "a": "SHED", "b": "WOODS" },
-    "F04": { "name": "Woods pole to 2 The Cottage", "fibres": 8, "a": "WOODS", "b": "C2-ENC" },
-    "F05": { "name": "2 The Cottage to 1 The Cottage", "fibres": 4, "a": "C2-ENC", "b": "C1-WB" },
-    "F06": { "name": "2 The Cottage to Ty Di rif", "fibres": 1, "a": "C2-ENC", "b": "TDR-WB" },
-    "F07": { "name": "2 The Cottage to Llwyn Dewi", "fibres": 1, "a": "C2-ENC", "b": "LD" }
+    "F03": {
+      "name": "Shed to woods pole",
+      "fibres": 24,
+      "tube_size": 12,
+      "a": "SHED",
+      "b": "WOODS"
+    },
+    "F04": {
+      "name": "Woods pole to 2 The Cottage",
+      "fibres": 8,
+      "a": "WOODS",
+      "b": "C2-ENC"
+    },
+    "F05": {
+      "name": "2 The Cottage to 1 The Cottage",
+      "fibres": 4,
+      "a": "C2-ENC",
+      "b": "C1-WB"
+    },
+    "F06": {
+      "name": "2 The Cottage to Ty Di rif",
+      "fibres": 1,
+      "a": "C2-ENC",
+      "b": "TDR-WB"
+    },
+    "F07": {
+      "name": "2 The Cottage to Llwyn Dewi",
+      "fibres": 1,
+      "a": "C2-ENC",
+      "b": "LD"
+    }
   },
   "nodes": {
     "SHED": {
@@ -23,56 +49,206 @@
       "name": "2 The Cottage enclosure",
       "where": "Outdoor enclosure on the wall of 2 The Cottage",
       "documented": true,
-      "layout": { "left": ["F04"], "right": ["F06", "F07", "F05"] },
+      "layout": {
+        "left": [
+          "F04"
+        ],
+        "right": [
+          "F06",
+          "F07",
+          "F05"
+        ]
+      },
       "panels": [
         {
-          "id": "P", "name": "16-port LC patch box (Llwynygorras Community)", "ports": 16, "connector": "LC/UPC",
-          "labels": { "1-8": "To the woods (F04)", "9": "Ty Di rif (F06)", "12": "Llwyn Dewi (F07)", "13-16": "1 The Cottage (F05)" }
+          "id": "P",
+          "name": "16-port LC patch box (Llwynygorras Community)",
+          "ports": 16,
+          "connector": "LC/UPC",
+          "labels": {
+            "1-8": "To the woods (F04)",
+            "9": "Ty Di rif (F06)",
+            "12": "Llwyn Dewi (F07)",
+            "13-16": "1 The Cottage (F05)"
+          }
         }
       ],
       "devices": [
-        { "id": "MC", "name": "MikroTik SFP media converter (2 The Cottage)", "ports": ["sfp1"], "notes": "PoE from the house; Ethernet into 2 The Cottage" }
+        {
+          "id": "MC",
+          "name": "MikroTik SFP media converter (2 The Cottage)",
+          "ports": [
+            "sfp1"
+          ],
+          "notes": "PoE from the house; Ethernet into 2 The Cottage"
+        }
       ],
       "joints": [
-        { "kind": "splice", "a": "F04:1-8", "b": "P:1-8", "note": "Strand-to-port order assumed (strand n on port n)", "assumed": true },
-        { "kind": "splice", "a": "F06:1", "b": "P:9" },
-        { "kind": "splice", "a": "F07:1", "b": "P:12" },
-        { "kind": "splice", "a": "F05:1-4", "b": "P:13-16", "note": "Strand-to-port order assumed", "assumed": true },
-        { "kind": "patch", "a": "P:1", "b": "P:9" },
-        { "kind": "patch", "a": "P:6", "b": "P:13" },
-        { "kind": "patch", "a": "P:7", "b": "MC:sfp1" },
-        { "kind": "patch", "a": "P:8", "b": "P:12" }
+        {
+          "kind": "splice",
+          "a": "F04:1-8",
+          "b": "P:1-8",
+          "note": "Strand-to-port order assumed (strand n on port n)",
+          "assumed": true
+        },
+        {
+          "kind": "splice",
+          "a": "F06:1",
+          "b": "P:9"
+        },
+        {
+          "kind": "splice",
+          "a": "F07:1",
+          "b": "P:12"
+        },
+        {
+          "kind": "splice",
+          "a": "F05:1-4",
+          "b": "P:13-16",
+          "note": "Strand-to-port order assumed",
+          "assumed": true
+        },
+        {
+          "kind": "patch",
+          "a": "P:1",
+          "b": "P:9"
+        },
+        {
+          "kind": "patch",
+          "a": "P:6",
+          "b": "P:13"
+        },
+        {
+          "kind": "patch",
+          "a": "P:7",
+          "b": "MC:sfp1"
+        },
+        {
+          "kind": "patch",
+          "a": "P:8",
+          "b": "P:12"
+        }
       ]
     },
     "TDR-WB": {
       "name": "Ty Di rif wall box",
       "where": "LC wall box at Ty Di rif",
       "documented": true,
-      "layout": { "left": ["F06"] },
-      "panels": [ { "id": "P", "name": "LC wall box", "ports": 2, "connector": "LC/UPC" } ],
+      "layout": {
+        "left": [
+          "F06"
+        ]
+      },
+      "panels": [
+        {
+          "id": "P",
+          "name": "LC wall box",
+          "ports": 2,
+          "connector": "LC/UPC"
+        }
+      ],
       "joints": [
-        { "kind": "splice", "a": "F06:1", "b": "P:1", "note": "Which of the 2 ports is spliced is not known", "assumed": true }
+        {
+          "kind": "splice",
+          "a": "F06:1",
+          "b": "P:1",
+          "note": "Which of the 2 ports is spliced is not known",
+          "assumed": true
+        }
       ]
     },
     "C1-WB": {
       "name": "1 The Cottage wall box",
       "where": "LC wall box at 1 The Cottage",
       "documented": true,
-      "layout": { "left": ["F05"] },
-      "panels": [ { "id": "P", "name": "LC wall box", "ports": 2, "connector": "LC/UPC" } ],
+      "layout": {
+        "left": [
+          "F05"
+        ]
+      },
+      "panels": [
+        {
+          "id": "P",
+          "name": "LC wall box",
+          "ports": 2,
+          "connector": "LC/UPC"
+        }
+      ],
       "joints": [
-        { "kind": "splice", "a": "F05:1-2", "b": "P:1-2", "note": "2 of the 4 fibres are spliced; which 2 is not known", "assumed": true }
+        {
+          "kind": "splice",
+          "a": "F05:1-2",
+          "b": "P:1-2",
+          "note": "2 of the 4 fibres are spliced; which 2 is not known",
+          "assumed": true
+        }
       ]
     },
     "LD": {
-      "name": "Llwyn Dewi",
-      "documented": false
+      "name": "Llwyn Dewi wall box",
+      "where": "Indoors at Llwyn Dewi, low on the wall where the drop cable comes up through the floor",
+      "documented": true,
+      "layout": {
+        "left": [
+          "F07"
+        ]
+      },
+      "panels": [
+        {
+          "id": "P",
+          "name": "LC wall box (Llwyn-y-Gorras community fibre)",
+          "ports": 2,
+          "connector": "LC/UPC"
+        }
+      ],
+      "devices": [
+        {
+          "id": "RB",
+          "name": "MikroTik RouterBOARD (Llwyn Dewi's router)",
+          "ports": [
+            "sfp1"
+          ],
+          "notes": "Ethernet to a Ubiquiti UniFi AP next to it"
+        }
+      ],
+      "joints": [
+        {
+          "kind": "splice",
+          "a": "F07:1",
+          "b": "P:1",
+          "note": "Port count (2) and which port is used are assumed",
+          "assumed": true
+        },
+        {
+          "kind": "patch",
+          "a": "P:1",
+          "b": "RB:sfp1",
+          "note": "Yellow LC patch lead up to the router's SFP; wall-box port assumed",
+          "assumed": true
+        }
+      ]
     }
   },
   "circuits": [
-    { "id": "tdr", "name": "Ty Di rif link (1G BiDi)", "start": "C2-ENC/P:9" },
-    { "id": "c1", "name": "1 The Cottage link (1G BiDi)", "start": "C2-ENC/P:13" },
-    { "id": "c2", "name": "2 The Cottage link (1G BiDi)", "start": "C2-ENC/MC:sfp1" },
-    { "id": "ld", "name": "Llwyn Dewi link (1G BiDi)", "start": "C2-ENC/P:12" }
+    {
+      "id": "tdr",
+      "name": "Ty Di rif link (1G BiDi)",
+      "start": "C2-ENC/P:9"
+    },
+    {
+      "id": "c1",
+      "name": "1 The Cottage link (1G BiDi)",
+      "start": "C2-ENC/P:13"
+    },
+    {
+      "id": "c2",
+      "name": "2 The Cottage link (1G BiDi)",
+      "start": "C2-ENC/MC:sfp1"
+    },
+    {
+      "id": "ld",
+      "name": "Llwyn Dewi link (1G BiDi)",
+      "start": "C2-ENC/P:12"
+    }
   ]
 }
