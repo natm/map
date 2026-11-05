@@ -139,7 +139,7 @@
         "type": "patch_point",
         "enclosure": "wall_box",
         "cables": "F06",
-        "notes": "Wall-mounted LC box with 2 LC connectors; 1 is spliced, to F06's single fibre.",
+        "notes": "Wall-mounted LC box with 2 LC connectors; port 1 is spliced to F06's single fibre and patched to the SFP in Ty Di rif's MikroTik router. Port 2 is spare.",
         "source": "Nat (contents); position is the end of F06 as drawn",
         "method": "aerial-trace",
         "surveyed": "2026-11-05",

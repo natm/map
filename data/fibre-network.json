@@ -176,8 +176,22 @@
           "kind": "splice",
           "a": "F06:1",
           "b": "P:1",
-          "note": "Which of the 2 ports is spliced is not known",
-          "assumed": true
+          "note": "F06 is spliced to port 1 (port 1 is the one in use, Nat 2026-11-05)",
+          "assumed": false
+        },
+        {
+          "kind": "patch",
+          "a": "P:1",
+          "b": "RB:sfp1"
+        }
+      ],
+      "devices": [
+        {
+          "id": "RB",
+          "name": "MikroTik router (Ty Di rif's)",
+          "ports": [
+            "sfp1"
+          ]
         }
       ]
     },
