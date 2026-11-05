@@ -4,6 +4,29 @@
     {
       "type": "Feature",
       "properties": {
+        "id": "F05",
+        "name": "F05: 2 The Cottage to 1 The Cottage",
+        "type": "cable",
+        "notes": "4-fibre single-mode cable. Route drawn by Nat over the aerial photo; exact line, depth and duct not surveyed.",
+        "source": "Nat, drawn in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 5,
+        "doc": "fibre.md#f05-2-the-cottage--1-the-cottage-4f-single-mode"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.067976, 51.938353],
+          [-5.067958, 51.938358],
+          [-5.067767, 51.938252],
+          [-5.067776, 51.938238]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "id": "F06",
         "name": "F06: 2 The Cottage to Ty Di rif",
         "type": "cable",
