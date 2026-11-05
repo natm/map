@@ -34,6 +34,9 @@
     cctv: '#8e44ad'
   };
 
+  // Fibre end markers: letter per enclosure.
+  var ENCLOSURE = { patch_panel: 'P', splice_closure: 'S', wall_box: 'W', cabinet: 'C', pedestal: 'B', ont: 'O', other: '?' };
+
   // Solid = surveyed on the ground; dashed = assumed or traced from imagery.
   function isAssumed(p) {
     var m = (p.method || '').toLowerCase();
@@ -91,7 +94,8 @@
         m = L.circleMarker(latlng, { radius: t === 'pole' ? 5 : 6, color: '#fff', weight: 1.5, fillColor: c, fillOpacity: 1 });
         break;
       case 'fibre':
-        m = L.marker(latlng, { icon: icon('square', '#f1c40f', '', 14) });
+        // Lettered box for what the cable ends or is spliced in (property 'enclosure').
+        m = L.marker(latlng, { icon: icon('square', t === 'splice' ? '#c0392b' : '#2c3e50', ENCLOSURE[p.enclosure] || (t === 'splice' ? 'S' : 'P'), 18) });
         break;
       case 'electric':
         m = L.marker(latlng, { icon: icon('square', c, t === 'consumer_unit' ? 'CU' : '', 18) });
@@ -173,6 +177,35 @@
     ['cctv', '📹 CCTV']
   ];
 
+  // ---- Highlight: click a line to see its whole route and both ends ----
+  var lineById = {};          // feature id -> Leaflet line layer (for junction markers' 'cables')
+  var hl = L.layerGroup().addTo(map);
+  var hlLines = [];
+
+  function clearHighlight() {
+    hlLines.forEach(function (x) { x.layer.setStyle(x.style); });
+    hlLines = [];
+    hl.clearLayers();
+  }
+
+  function highlightLine(layer) {
+    var f = layer.feature;
+    hlLines.push({ layer: layer, style: L.extend({}, layer.options) });
+    layer.setStyle({ color: '#00e5ff', weight: 7, opacity: 1 });
+    layer.bringToFront();
+    // A white casing underneath, so it stands out on the aerial.
+    L.geoJSON(f, { style: { color: '#fff', weight: 11, opacity: 0.8 }, interactive: false }).addTo(hl).bringToBack();
+    var g = f.geometry;
+    var parts = g.type === 'LineString' ? [g.coordinates] : g.type === 'MultiLineString' ? g.coordinates : [];
+    parts.forEach(function (c) {
+      [c[0], c[c.length - 1]].forEach(function (pt) {
+        L.circleMarker([pt[1], pt[0]], { radius: 6, color: '#fff', weight: 2, fillColor: '#00e5ff', fillOpacity: 1, interactive: false }).addTo(hl);
+      });
+    });
+  }
+
+  map.on('popupclose', clearHighlight);
+
   var overlays = {};
   LAYERS.forEach(function (l) {
     var name = l[0];
@@ -190,7 +223,21 @@
         L.geoJSON(data, {
           style: function (f) { return lineStyle(name, f.properties || {}); },
           pointToLayer: function (f, latlng) { return pointMarker(name, f, latlng); },
-          onEachFeature: function (f, layer) { layer.bindPopup(popupHtml(f.properties || {}), { maxWidth: 320 }); }
+          onEachFeature: function (f, layer) {
+            var p = f.properties || {};
+            layer.bindPopup(popupHtml(p), { maxWidth: 320 });
+            var gt = f.geometry && f.geometry.type;
+            if (gt === 'LineString' || gt === 'MultiLineString') {
+              if (p.id) lineById[p.id] = layer;
+              layer.on('popupopen', function () { clearHighlight(); highlightLine(layer); });
+            } else if (p.cables) {
+              // A junction: highlight every cable that ends or is spliced here.
+              layer.on('popupopen', function () {
+                clearHighlight();
+                String(p.cables).split(/[,\s]+/).forEach(function (id) { if (lineById[id]) highlightLine(lineById[id]); });
+              });
+            }
+          }
         }).addTo(group);
       })
       .catch(function (e) { console.warn('Could not load layer ' + name + ': ' + e); });
@@ -244,7 +291,9 @@
         '<div class="updated">Last updated ' + UPDATED + '</div>' +
         '<ul>' + items +
         '<li><span class="swatch" style="border-color:#333"></span>Surveyed</li>' +
-        '<li><span class="swatch dashed" style="border-color:#333"></span>Assumed / traced</li></ul>' +
+        '<li><span class="swatch dashed" style="border-color:#333"></span>Assumed / traced</li>' +
+        '<li class="ends">Fibre ends: <b>P</b> patch panel, <b>S</b> splice closure, <b>W</b> wall box, <b>C</b> cabinet, <b>B</b> pedestal, <b>O</b> ONT</li></ul>' +
+        '<div class="note">Tap a cable to highlight its whole route.</div>' +
         '<div class="note">Positions are approximate; check popups for method and accuracy.</div>';
       L.DomEvent.disableClickPropagation(div);
       div.querySelector('h1').addEventListener('click', function () {

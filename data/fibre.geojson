@@ -46,6 +46,46 @@
           [-5.067575, 51.938136]
         ]
       }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "C1-WB",
+        "name": "1 The Cottage: LC wall box",
+        "type": "patch_point",
+        "enclosure": "wall_box",
+        "cables": "F05",
+        "notes": "Wall-mounted LC box with 2 LC connectors; both are spliced, to 2 of F05's 4 fibres.",
+        "source": "Nat (contents); position is the end of F05 as drawn",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 5,
+        "doc": "fibre.md#locations-patch-points"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067776, 51.938238]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "TDR-WB",
+        "name": "Ty Di rif: LC wall box",
+        "type": "patch_point",
+        "enclosure": "wall_box",
+        "cables": "F06",
+        "notes": "Wall-mounted LC box with 2 LC connectors; 1 is spliced, to F06's single fibre.",
+        "source": "Nat (contents); position is the end of F06 as drawn",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 5,
+        "doc": "fibre.md#locations-patch-points"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067575, 51.938136]
+      }
     }
   ]
 }
