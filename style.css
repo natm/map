@@ -63,6 +63,7 @@ body {
 
 /* Popups */
 .leaflet-popup-content { margin: 10px 12px; max-width: 70vw; }
+.photo { display: block; width: 100%; max-width: 300px; height: auto; margin: 6px 0; border-radius: 4px; }
 .props { border-collapse: collapse; font-size: 12px; }
 .props th { text-align: left; padding: 1px 8px 1px 0; color: #555; vertical-align: top; font-weight: normal; }
 .props td { padding: 1px 0; word-break: break-word; }

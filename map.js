@@ -152,7 +152,11 @@
   }
 
   function popupHtml(p) {
-    var rows = Object.keys(p).map(function (k) {
+    var pics = (Array.isArray(p.photos) ? p.photos : []).map(function (f) {
+      var src = 'photos/' + encodeURIComponent(f);
+      return '<a href="' + src + '" target="_blank" rel="noopener"><img class="photo" src="' + src + '" alt="' + esc(p.name || f) + '" loading="lazy"></a>';
+    }).join('');
+    var rows = Object.keys(p).filter(function (k) { return k !== 'photos'; }).map(function (k) {
       var v = p[k];
       if (v === null || v === undefined) v = '';
       if (typeof v === 'object') v = JSON.stringify(v);
@@ -163,7 +167,7 @@
       return '<tr><th>' + esc(k) + '</th><td>' + cell + '</td></tr>';
     });
     var title = p.name ? '<strong>' + esc(p.name) + '</strong>' : '';
-    return title + '<table class="props">' + rows.join('') + '</table>';
+    return title + pics + '<table class="props">' + rows.join('') + '</table>';
   }
 
   // ---- Overlays ----
@@ -225,7 +229,11 @@
           pointToLayer: function (f, latlng) { return pointMarker(name, f, latlng); },
           onEachFeature: function (f, layer) {
             var p = f.properties || {};
-            layer.bindPopup(popupHtml(p), { maxWidth: 320 });
+            layer.bindPopup(popupHtml(p), { maxWidth: 320, minWidth: p.photos ? 260 : 50 });
+            layer.on('popupopen', function (e) {
+              var img = e.popup.getElement() && e.popup.getElement().querySelector('img.photo');
+              if (img && !img.complete) img.addEventListener('load', function () { e.popup.update(); });
+            });
             var gt = f.geometry && f.geometry.type;
             if (gt === 'LineString' || gt === 'MultiLineString') {
               if (p.id) lineById[p.id] = layer;

@@ -80,7 +80,10 @@
         "method": "aerial-trace",
         "surveyed": "2026-11-05",
         "accuracy_m": 5,
-        "doc": "fibre.md#locations-patch-points"
+        "doc": "fibre.md#locations-patch-points",
+        "photos": [
+          "c2-enc-2026-11-05.jpg"
+        ]
       },
       "geometry": {
         "type": "Point",
