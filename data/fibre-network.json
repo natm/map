@@ -37,24 +37,24 @@
       "name": "Barn rack to the barn manhole closure",
       "fibres": 40,
       "a": "BARN",
-      "b": "MH01"
+      "b": "MH01-SC"
     },
     "F10": {
       "name": "Barn manhole closure to the treehouse",
       "fibres": 8,
-      "a": "MH01",
+      "a": "MH01-SC",
       "b": "TREEHOUSE"
     },
     "F12": {
       "name": "Barn manhole closure to the greenhouse",
       "fibres": 8,
-      "a": "MH01",
+      "a": "MH01-SC",
       "b": "GREENHOUSE"
     },
     "F13": {
       "name": "Barn manhole closure to the workshop",
       "fibres": 8,
-      "a": "MH01",
+      "a": "MH01-SC",
       "b": "WORKSHOP"
     }
   },
@@ -256,7 +256,7 @@
       "name": "Barn rack",
       "documented": false
     },
-    "MH01": {
+    "MH01-SC": {
       "name": "Barn manhole splice closure",
       "where": "CommScope inline closure in the manhole outside the barn",
       "documented": false,

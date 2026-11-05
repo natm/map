@@ -1,4 +1,23 @@
 {
   "type": "FeatureCollection",
-  "features": []
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH01",
+        "name": "Barn manhole",
+        "type": "manhole",
+        "notes": "Outside the barn by the roller doors. Holds the CommScope splice closure MH01-SC (barn rack to treehouse, greenhouse and workshop). F08 (barn to shed) passes through unspliced.",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 5
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067031, 51.938332]
+      }
+    }
+  ]
 }

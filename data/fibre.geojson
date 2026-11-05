@@ -112,6 +112,27 @@
     {
       "type": "Feature",
       "properties": {
+        "id": "MH01-SC",
+        "name": "Barn manhole: CommScope splice closure",
+        "type": "splice",
+        "enclosure": "splice_closure",
+        "cables": "F09, F10, F12, F13",
+        "notes": "Inline closure with about 6 splice trays. F09 (yellow, labelled 40-core, to the barn rack) is spliced to F12 (greenhouse, 1 GH), F10 (treehouse, 2 TH) and F13 (workshop, 3 WS), each 8-fibre. Which fibres go where is not yet recorded.",
+        "doc": "fibre.md#barn-manhole-splice-closure-mh01",
+        "photos": ["mh01-closure-1-2026-11-05.jpg", "mh01-closure-2-2026-11-05.jpg", "mh01-closure-3-2026-11-05.jpg", "mh01-closure-4-2026-11-05.jpg"],
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 5
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067031, 51.938332]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "id": "TDR-WB",
         "name": "Ty Di rif: LC wall box",
         "type": "patch_point",
