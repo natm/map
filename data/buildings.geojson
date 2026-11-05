@@ -1,0 +1,22 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "B00",
+        "name": "Llwynygorras (house)",
+        "type": "building",
+        "notes": "Placeholder point at the house's documented coordinates, until the outline is traced or surveyed (phase 1).",
+        "source": "README coordinates",
+        "method": "assumed",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 20
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067480, 51.938686]
+      }
+    }
+  ]
+}
