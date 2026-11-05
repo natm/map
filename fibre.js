@@ -191,8 +191,8 @@
     while (i < seq.length) {
       if (seq[i].edge) {   // a cable between nodes
         var e = seq[i].edge, c = net.cables[e.cable];
-        html += '<div class="fx-cable"><div class="fx-line" style="border-color:' + fibreColour(c, e.fibre).hex + '"></div><div class="fx-clabel"><b>' +
-          esc(e.cable) + '</b> fibre ' + e.fibre + ' ' + chip(e.cable, e.fibre) + '<br><span class="fx-sub">' + esc(c.name) + ', ' + c.fibres + 'F</span></div></div>';
+        html += '<div class="fx-cable"><div class="fx-line" style="border-color:' + fibreColour(c, e.fibre).hex + '"></div><div class="fx-clabel"><a href="#" data-fx="cable" data-id="' + esc(e.cable) + '"><b>' +
+          esc(e.cable) + '</b></a> fibre ' + e.fibre + ' ' + chip(e.cable, e.fibre) + '<br><span class="fx-sub">' + esc(c.name) + ', ' + c.fibres + 'F</span></div></div>';
         i++; continue;
       }
       var nid = parseKey(seq[i].key).node, node = net.nodes[nid] || { name: nid };
@@ -210,8 +210,14 @@
       }
       if (i >= seq.length && i - 1 !== first) inner += endNote(seq[i - 1].key, false);
       else if (i >= seq.length) inner += endNote(seq[i - 1].key, false);
-      html += '<div class="fx-node"><div class="fx-nname">' + esc(node.name || nid) + (node.where ? '<span class="fx-sub">' + esc(node.where) + '</span>' : '') +
-        (node.documented ? ' <button class="fx-btn small" data-fx="splice" data-node="' + esc(nid) + '">🔀 Splice diagram</button>' : '') + '</div>' + inner + '</div>';
+      var onMap = window.SiteMap.hasFeature(nid);
+      html += '<div class="fx-node"><div class="fx-nname">' +
+        (onMap ? '<a href="#" data-fx="feature" data-id="' + esc(nid) + '">' + esc(node.name || nid) + '</a>' : esc(node.name || nid)) +
+        (node.where ? '<span class="fx-sub">' + esc(node.where) + '</span>' : '') +
+        '<span class="fx-nbtns">' +
+        (onMap ? '<button class="fx-btn small" data-fx="feature" data-id="' + esc(nid) + '">📍 Details and photos</button>' : '') +
+        (node.documented ? '<button class="fx-btn small" data-fx="splice" data-node="' + esc(nid) + '">🔀 Splice diagram</button>' : '') +
+        '</span></div>' + inner + '</div>';
     }
     return '<div class="fx-trace">' + html + '</div>';
   }
@@ -454,6 +460,12 @@
     if (!b || !net) return;
     ev.preventDefault();
     if (b.getAttribute('data-fx') === 'splice') showSplices(b.getAttribute('data-node'));
+    if (b.getAttribute('data-fx') === 'feature') { closePanel(); window.SiteMap.openFeature(b.getAttribute('data-id')); }
+    if (b.getAttribute('data-fx') === 'cable') {
+      var cid = b.getAttribute('data-id');
+      window.SiteMap.highlightIds([cid], true);
+      window.FibreNet.cableOpened(cid);
+    }
     if (b.getAttribute('data-fx') === 'trace') {
       var c = (net.circuits || []).filter(function (x) { return x.id === b.getAttribute('data-circuit'); })[0];
       if (c) showTrace(c.name, traces[c.id]);

@@ -287,6 +287,15 @@
     map: map,
     clearHighlight: clearHighlight,
     closePopup: function () { map.closePopup(); },
+    hasFeature: function (id) { return !!featureById[id]; },
+    openFeature: function (id) {
+      var l = featureById[id];
+      if (!l) return false;
+      var ll = l.getLatLng ? l.getLatLng() : l.getBounds().getCenter();
+      map.setView(ll, Math.max(map.getZoom(), 19));
+      l.openPopup(ll);
+      return true;
+    },
     refreshPopup: function () { var pp = map._popup; if (pp && map.hasLayer(pp)) pp.update(); },
     highlightIds: function (ids, fit) {
       clearHighlight();

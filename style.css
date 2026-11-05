@@ -124,3 +124,5 @@ body {
 .also-item { margin: 4px 0; }
 .also-name { font-weight: 600; }
 .also-type { font-size: 11px; color: #666; }
+.fx-nbtns { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.fx-nname a, .fx-clabel a { color: #0b5cad; text-decoration: none; }
