@@ -152,13 +152,13 @@
   }
 
   function popupHtml(p) {
-    // Photos: a swipeable strip (one per view), each opens full size when tapped.
+    // Photos: a row of small thumbnails; tapping one opens the photo viewer.
     var list = Array.isArray(p.photos) ? p.photos : [];
     var pics = list.map(function (f, i) {
       var src = 'photos/' + encodeURIComponent(f);
-      return '<a href="' + src + '" target="_blank" rel="noopener"><img class="photo" src="' + src + '" alt="' + esc((p.name || f) + ' photo ' + (i + 1)) + '" loading="lazy"></a>';
+      return '<img class="thumb" src="' + src + '" alt="' + esc((p.name || f) + ' photo ' + (i + 1)) + '" data-photos="' + esc(list.join('|')) + '" data-i="' + i + '" loading="lazy">';
     }).join('');
-    if (pics) pics = '<div class="photos">' + pics + '</div>' + (list.length > 1 ? '<div class="photo-count">' + list.length + ' photos: swipe sideways · tap to enlarge</div>' : '');
+    if (pics) pics = '<div class="thumbs">' + pics + '</div>';
     var rows = Object.keys(p).filter(function (k) { return k !== 'photos'; }).map(function (k) {
       var v = p[k];
       if (v === null || v === undefined) v = '';
@@ -170,8 +170,57 @@
       return '<tr><th>' + esc(k) + '</th><td>' + cell + '</td></tr>';
     });
     var title = p.name ? '<strong>' + esc(p.name) + '</strong>' : '';
-    return title + pics + '<table class="props">' + rows.join('') + '</table>';
+    var extras = window.FibreNet ? window.FibreNet.popupExtras(p) : '';
+    return title + pics + extras + '<table class="props">' + rows.join('') + '</table>';
   }
+
+  // ---- #feature=<id>: open that item's popup (shareable links) ----
+  function openFeatureFromHash() {
+    var mm = /^#feature=([\w-]+)$/.exec(location.hash || '');
+    var l = mm && featureById[mm[1]];
+    if (!l || l._fromHash) return;
+    l._fromHash = true;
+    var ll = l.getLatLng ? l.getLatLng() : l.getBounds().getCenter();
+    map.setView(ll, Math.max(map.getZoom(), 19));
+    l.openPopup(ll);
+  }
+  window.addEventListener('hashchange', function () { Object.keys(featureById).forEach(function (k) { featureById[k]._fromHash = false; }); openFeatureFromHash(); });
+
+  // ---- Photo viewer (lightbox) ----
+  var viewer = null, vList = [], vI = 0;
+  function showPhoto() {
+    viewer.querySelector('img').src = 'photos/' + encodeURIComponent(vList[vI]);
+    viewer.querySelector('.pv-count').textContent = (vI + 1) + ' / ' + vList.length;
+    viewer.querySelector('.pv-full').href = 'photos/' + encodeURIComponent(vList[vI]);
+    viewer.classList.toggle('single', vList.length < 2);
+  }
+  function openViewer(list, i) {
+    if (!viewer) {
+      viewer = document.createElement('div');
+      viewer.className = 'pv';
+      viewer.innerHTML = '<button class="pv-close" title="Close">&times;</button><button class="pv-prev" title="Previous">&#8249;</button>' +
+        '<img alt=""><button class="pv-next" title="Next">&#8250;</button><div class="pv-bar"><span class="pv-count"></span> · <a class="pv-full" target="_blank" rel="noopener">full size</a></div>';
+      document.body.appendChild(viewer);
+      viewer.addEventListener('click', function (e) {
+        var c = e.target.className;
+        if (c === 'pv-prev') { vI = (vI + vList.length - 1) % vList.length; showPhoto(); }
+        else if (c === 'pv-next') { vI = (vI + 1) % vList.length; showPhoto(); }
+        else if (c === 'pv-close' || e.target === viewer) viewer.classList.remove('open');
+      });
+      document.addEventListener('keydown', function (e) {
+        if (!viewer.classList.contains('open')) return;
+        if (e.key === 'Escape') viewer.classList.remove('open');
+        if (e.key === 'ArrowLeft') { vI = (vI + vList.length - 1) % vList.length; showPhoto(); }
+        if (e.key === 'ArrowRight') { vI = (vI + 1) % vList.length; showPhoto(); }
+      });
+    }
+    vList = list; vI = i; showPhoto();
+    viewer.classList.add('open');
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (t.classList && t.classList.contains('thumb')) openViewer(t.getAttribute('data-photos').split('|'), +t.getAttribute('data-i'));
+  });
 
   // ---- Overlays ----
   var LAYERS = [
@@ -185,7 +234,8 @@
   ];
 
   // ---- Highlight: click a line to see its whole route and both ends ----
-  var lineById = {};          // feature id -> Leaflet line layer (for junction markers' 'cables')
+  var lineById = {};
+  var featureById = {};       // feature id -> Leaflet layer (for #feature= links)          // feature id -> Leaflet line layer (for junction markers' 'cables')
   var hl = L.layerGroup().addTo(map);
   var hlLines = [];
 
@@ -219,6 +269,7 @@
     map: map,
     clearHighlight: clearHighlight,
     closePopup: function () { map.closePopup(); },
+    refreshPopup: function () { var pp = map._popup; if (pp && map.hasLayer(pp)) pp.update(); },
     highlightIds: function (ids, fit) {
       clearHighlight();
       var b = null;
@@ -251,13 +302,10 @@
           pointToLayer: function (f, latlng) { return pointMarker(name, f, latlng); },
           onEachFeature: function (f, layer) {
             var p = f.properties || {};
+            if (p.id) featureById[p.id] = layer;
             layer.bindPopup(function () {
-              return popupHtml(p) + (window.FibreNet ? window.FibreNet.popupExtras(p) : '');
-            }, { maxWidth: 320, minWidth: p.photos ? 260 : 50 });
-            layer.on('popupopen', function (e) {
-              var img = e.popup.getElement() && e.popup.getElement().querySelector('img.photo');
-              if (img && !img.complete) img.addEventListener('load', function () { e.popup.update(); });
-            });
+              return popupHtml(p);
+            }, { maxWidth: 320, minWidth: 50, maxHeight: Math.max(220, Math.round(window.innerHeight * 0.55)), autoPanPadding: [20, 20] });
             var gt = f.geometry && f.geometry.type;
             if (gt === 'LineString' || gt === 'MultiLineString') {
               if (p.id) lineById[p.id] = layer;
@@ -274,6 +322,7 @@
             }
           }
         }).addTo(group);
+        openFeatureFromHash();
       })
       .catch(function (e) { console.warn('Could not load layer ' + name + ': ' + e); });
   });

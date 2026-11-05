@@ -462,7 +462,7 @@
 
   fetch('data/fibre-network.json', { cache: 'no-cache' })
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function (d) { net = d; build(); setTimeout(openFromHash, 600); })
+    .then(function (d) { net = d; build(); window.SiteMap.refreshPopup(); setTimeout(openFromHash, 600); })
     .catch(function (e) { console.warn('Could not load the fibre network: ' + e); });
 
   // Deep links: #splice=C2-ENC, #trace=tdr, #cable=F05 (shareable, and used for tests).

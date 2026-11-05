@@ -63,10 +63,18 @@ body {
 
 /* Popups */
 .leaflet-popup-content { margin: 10px 12px; max-width: 70vw; }
-.photos { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; max-width: 300px; margin: 6px 0 2px; -webkit-overflow-scrolling: touch; }
-.photos a { flex: 0 0 100%; scroll-snap-align: start; }
-.photo { display: block; width: 100%; height: auto; border-radius: 4px; }
-.photo-count { font-size: 11px; color: #666; margin-bottom: 4px; }
+.thumbs { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 4px; }
+.thumb { height: 72px; width: auto; max-width: 110px; object-fit: cover; border-radius: 4px; cursor: zoom-in; border: 1px solid #ccc; }
+.pv { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.88); display: none; align-items: center; justify-content: center; }
+.pv.open { display: flex; }
+.pv img { max-width: 92vw; max-height: 84vh; object-fit: contain; border-radius: 4px; }
+.pv button { position: absolute; background: rgba(255,255,255,.15); color: #fff; border: 0; font-size: 34px; line-height: 1; cursor: pointer; border-radius: 6px; padding: 4px 12px; }
+.pv-close { top: 12px; right: 12px; }
+.pv-prev { left: 10px; top: 50%; transform: translateY(-50%); }
+.pv-next { right: 10px; top: 50%; transform: translateY(-50%); }
+.pv.single .pv-prev, .pv.single .pv-next { display: none; }
+.pv-bar { position: absolute; bottom: 14px; left: 0; right: 0; text-align: center; color: #ddd; font: 13px sans-serif; }
+.pv-bar a { color: #9cf; }
 .props { border-collapse: collapse; font-size: 12px; }
 .props th { text-align: left; padding: 1px 8px 1px 0; color: #555; vertical-align: top; font-weight: normal; }
 .props td { padding: 1px 0; word-break: break-word; }
