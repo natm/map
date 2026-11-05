@@ -429,14 +429,33 @@
       var nd = net.nodes[nid] || {};
       return nd.documented ? '<button class="fx-btn small" data-fx="splice" data-node="' + esc(nid) + '">🔀 ' + esc(nm) + '</button>' : '<span class="fx-sub">' + esc(nm) + ' (❓ not documented)</span>';
     };
-    return '<p class="fx-sub">' + c.fibres + ' fibres · ' + esc(an) + ' → ' + esc(bn) + '</p>' +
+    return window.SiteMap.lineAccuracy(id) + '<p class="fx-sub">' + c.fibres + ' fibres · ' + esc(an) + ' → ' + esc(bn) + '</p>' +
       '<div class="fx-btns">' + ends(c.a, an) + ends(c.b, bn) + '</div>' +
       '<div class="fx-scroll"><table class="fx-table"><tr><th>#</th><th>Colour</th><th>At ' + esc(an) + '</th><th>At ' + esc(bn) + '</th><th>Link</th></tr>' + rows + '</table></div>' +
       '<p class="fx-note">Tap a link to trace it end to end; its whole path lights up on the map.</p>';
   }
 
+  // ---- Assumed straight lines for cables that aren't drawn yet but have both ends on the map ----
+  var mapIsReady = false, assumedDone = false;
+  function drawAssumed() {
+    if (!net || !mapIsReady || assumedDone) return;
+    assumedDone = true;
+    Object.keys(net.cables).forEach(function (id) {
+      var c = net.cables[id];
+      if (window.SiteMap.hasLine(id)) return;
+      var an = (net.nodes[c.a] || {}).name || c.a, bn = (net.nodes[c.b] || {}).name || c.b;
+      window.SiteMap.addAssumedLine(id, c.a, c.b, {
+        id: id, name: id + ': ' + c.name, type: 'cable',
+        notes: c.fibres + '-fibre cable from ' + an + ' to ' + bn + '. ⚠️ Drawn as a straight line between its two ends: the real route is not known and needs surveying.',
+        source: 'Drawn automatically from the fibre model', method: 'assumed', accuracy_m: null
+      });
+    });
+    setTimeout(function () { openFromHash(); window.SiteMap.openHash(); }, 100);   // deep links once everything is drawn
+  }
+
   // ---- Hooks for map.js popups ----
   window.FibreNet = {
+    mapReady: function () { mapIsReady = true; drawAssumed(); },
     isOpen: function () { return !!(panel && panel.classList.contains('open')); },
     cableOpened: function (id) {
       if (!net || !net.cables[id]) return;
@@ -474,7 +493,7 @@
 
   fetch('data/fibre-network.json', { cache: 'no-cache' })
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function (d) { net = d; build(); window.SiteMap.refreshPopup(); setTimeout(openFromHash, 600); })
+    .then(function (d) { net = d; build(); drawAssumed(); window.SiteMap.refreshPopup(); })
     .catch(function (e) { console.warn('Could not load the fibre network: ' + e); });
 
   // Deep links: #splice=C2-ENC, #trace=tdr, #cable=F05 (shareable, and used for tests).

@@ -29,6 +29,7 @@ body {
 .info-box .note { font-size: 11px; color: #555; margin-top: 4px; }
 .swatch { display: inline-block; width: 22px; height: 0; border-top: 3px solid; }
 .swatch.dashed { border-top-style: dashed; }
+.swatch.dotted { border-top-style: dotted; border-top-width: 4px; }
 
 /* Locate button */
 .locate-btn a { font-size: 18px; line-height: 30px; text-align: center; cursor: pointer; }
@@ -126,3 +127,9 @@ body {
 .also-type { font-size: 11px; color: #666; }
 .fx-nbtns { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
 .fx-nname a, .fx-clabel a { color: #0b5cad; text-decoration: none; }
+
+/* Accuracy badges */
+.acc { font-size: 12px; border-radius: 5px; padding: 4px 8px; margin: 6px 0; border: 1px solid; }
+.acc-ok { background: #e8f5e9; border-color: #66bb6a; color: #1b5e20; }
+.acc-approx { background: #fff8e1; border-color: #ffb300; color: #6d4c00; }
+.acc-assumed { background: #fce4ec; border-color: #e040fb; color: #6a1b6a; font-weight: 600; }

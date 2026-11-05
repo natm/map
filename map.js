@@ -37,10 +37,27 @@
   // Fibre end markers: letter per enclosure.
   var ENCLOSURE = { patch_panel: 'P', splice_closure: 'S', wall_box: 'W', cabinet: 'C', pedestal: 'B', ont: 'O', other: '?' };
 
-  // Solid = surveyed on the ground; dashed = assumed or traced from imagery.
-  function isAssumed(p) {
+  // How accurately a line or point is known, from its 'method':
+  //   surveyed: GPS or measured on the ground       -> solid, layer colour
+  //   approx:   traced from the aerial or described -> dashed, layer colour
+  //   assumed:  a guess, e.g. a straight line        -> dotted magenta
+  var ASSUMED = '#e040fb';
+  function tier(p) {
     var m = (p.method || '').toLowerCase();
-    return m === 'assumed' || m === 'aerial-trace' || m === 'description' || !m;
+    if (m === 'gps-phone' || m === 'gps-rtk' || m === 'measured') return 'surveyed';
+    if (m === 'aerial-trace' || m === 'description') return 'approx';
+    return 'assumed';
+  }
+  function isAssumed(p) { return tier(p) !== 'surveyed'; }
+
+  // A clear badge saying how accurate a feature's position or route is.
+  function accuracyBadge(p, isLine) {
+    var t = tier(p), what = isLine ? 'Route' : 'Position';
+    var acc = p.accuracy_m ? ' (about ±' + p.accuracy_m + ' m)' : '';
+    var how = { 'gps-phone': 'phone GPS', 'gps-rtk': 'RTK GPS', 'measured': 'measured', 'aerial-trace': 'traced from the aerial photo', 'description': 'from a description' }[(p.method || '').toLowerCase()] || '';
+    if (t === 'surveyed') return '<div class="acc acc-ok">✅ ' + what + ' surveyed: ' + how + acc + '</div>';
+    if (t === 'approx') return '<div class="acc acc-approx">〰️ ' + what + ' approximate: ' + how + acc + '. Survey on the ground to confirm.</div>';
+    return '<div class="acc acc-assumed">⚠️ ' + what + ' assumed' + (isLine ? ': a straight line between its ends, not the real route' : '') + '. Needs surveying.</div>';
   }
 
   function lineStyle(layer, p) {
@@ -55,8 +72,10 @@
       if (t === 'fttp_drop') s.weight = 4;
       if (t === 'underground') s.dashArray = '6 6';
     }
-    if (isAssumed(p) && layer !== 'buildings') s.dashArray = '6 6';
-    if (isAssumed(p) && layer === 'buildings') s.dashArray = '4 4';
+    var tr = tier(p);
+    if (layer === 'buildings') { if (tr !== 'surveyed') s.dashArray = '4 4'; return s; }
+    if (tr === 'approx') s.dashArray = '9 6';
+    if (tr === 'assumed') { s.color = ASSUMED; s.dashArray = '1 7'; s.lineCap = 'round'; s.weight = 4; s.opacity = 1; }
     return s;
   }
 
@@ -175,7 +194,7 @@
     }).join('') + '</div>';
   }
 
-  function popupHtml(p, latlng) {
+  function popupHtml(p, latlng, isLine) {
     var pics = thumbsHtml(p);
     var rows = Object.keys(p).filter(function (k) { return k !== 'photos'; }).map(function (k) {
       var v = p[k];
@@ -189,7 +208,7 @@
     });
     var title = p.name ? '<strong>' + esc(p.name) + '</strong>' : '';
     var extras = window.FibreNet ? window.FibreNet.popupExtras(p) : '';
-    return title + pics + extras + alsoHere(p, latlng) + '<table class="props">' + rows.join('') + '</table>';
+    return title + accuracyBadge(p, isLine) + pics + extras + alsoHere(p, latlng) + '<table class="props">' + rows.join('') + '</table>';
   }
 
   // ---- #feature=<id>: open that item's popup (shareable links) ----
@@ -288,6 +307,21 @@
     clearHighlight: clearHighlight,
     closePopup: function () { map.closePopup(); },
     hasFeature: function (id) { return !!featureById[id]; },
+    hasLine: function (id) { return !!lineById[id]; },
+    openHash: function () { openFeatureFromHash(); },
+    lineAccuracy: function (id) {
+      var l = lineById[id];
+      return l ? accuracyBadge(l.feature.properties || {}, true) : '<div class="acc acc-assumed">⚠️ Not on the map yet: the route needs drawing or surveying.</div>';
+    },
+    // Draw an assumed straight line for a cable whose two ends are on the map but whose route isn't drawn.
+    addAssumedLine: function (id, fromId, toId, props) {
+      var a = featureById[fromId], b = featureById[toId];
+      if (!a || !b || !a.getLatLng || !b.getLatLng || lineById[id]) return false;
+      var pa = a.getLatLng(), pb = b.getLatLng();
+      var f = { type: 'Feature', properties: props, geometry: { type: 'LineString', coordinates: [[pa.lng, pa.lat], [pb.lng, pb.lat]] } };
+      L.geoJSON(f, geoOptions('fibre')).addTo(groups.fibre);
+      return true;
+    },
     openFeature: function (id) {
       var l = featureById[id];
       if (!l) return false;
@@ -306,25 +340,18 @@
         highlightLine(l);
         b = b ? b.extend(l.getBounds()) : L.latLngBounds(l.getBounds().getSouthWest(), l.getBounds().getNorthEast());
       });
-      if (fit && b) map.fitBounds(b, { padding: [40, 40], maxZoom: 19 });
+      if (fit && b) {
+        // Keep the route clear of the diagram panel (right side on wide screens, bottom on phones).
+        var wide = window.innerWidth > 700;
+        map.fitBounds(b, { paddingTopLeft: [40, 40], paddingBottomRight: wide ? [Math.min(640, window.innerWidth) + 40, 40] : [40, Math.round(window.innerHeight * 0.62) + 20], maxZoom: 19 });
+      }
     }
   };
 
-  var overlays = {};
-  LAYERS.forEach(function (l) {
-    var name = l[0];
-    var group = L.featureGroup().addTo(map);
-    overlays[l[1]] = group;
-    fetch('data/' + name + '.geojson', { cache: 'no-cache' })
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function (data) {
-        if (name === 'cctv') {
-          (data.features || []).forEach(function (f) {
-            var cone = viewCone(f);
-            if (cone) cone.addTo(group);
-          });
-        }
-        L.geoJSON(data, {
+  var overlays = {}, groups = {}, loaded = 0;
+
+  function geoOptions(name) {
+    return {
           style: function (f) { return lineStyle(name, f.properties || {}); },
           pointToLayer: function (f, latlng) { return pointMarker(name, f, latlng); },
           onEachFeature: function (f, layer) {
@@ -332,7 +359,8 @@
             if (p.id) featureById[p.id] = layer;
             if (layer.getLatLng) points.push({ p: p, latlng: layer.getLatLng() });
             layer.bindPopup(function () {
-              return popupHtml(p, layer.getLatLng ? layer.getLatLng() : null);
+              var gt = f.geometry && f.geometry.type;
+              return popupHtml(p, layer.getLatLng ? layer.getLatLng() : null, gt === 'LineString' || gt === 'MultiLineString');
             }, { maxWidth: 320, minWidth: 50, maxHeight: Math.max(220, Math.round(window.innerHeight * 0.55)), autoPanPadding: [20, 20] });
             var gt = f.geometry && f.geometry.type;
             if (gt === 'LineString' || gt === 'MultiLineString') {
@@ -349,10 +377,33 @@
               });
             }
           }
-        }).addTo(group);
+        };
+  }
+
+  LAYERS.forEach(function (l) {
+    var name = l[0];
+    var group = L.featureGroup().addTo(map);
+    groups[name] = group;
+    overlays[l[1]] = group;
+    fetch('data/' + name + '.geojson', { cache: 'no-cache' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (data) {
+        if (name === 'cctv') {
+          (data.features || []).forEach(function (f) {
+            var cone = viewCone(f);
+            if (cone) cone.addTo(group);
+          });
+        }
+        L.geoJSON(data, geoOptions(name)).addTo(group);
+        loaded++;
+        if (loaded === LAYERS.length && window.FibreNet) window.FibreNet.mapReady();
         openFeatureFromHash();
       })
-      .catch(function (e) { console.warn('Could not load layer ' + name + ': ' + e); });
+      .catch(function (e) {
+        console.warn('Could not load layer ' + name + ': ' + e);
+        loaded++;
+        if (loaded === LAYERS.length && window.FibreNet) window.FibreNet.mapReady();
+      });
   });
 
   L.control.layers({ 'Aerial (Esri)': aerial, 'Map (OpenStreetMap)': osm }, overlays, { collapsed: true }).addTo(map);
@@ -402,8 +453,9 @@
         '<h1 title="Tap for legend">Llwynygorras site map</h1>' +
         '<div class="updated">Last updated ' + UPDATED + '</div>' +
         '<ul>' + items +
-        '<li><span class="swatch" style="border-color:#333"></span>Surveyed</li>' +
-        '<li><span class="swatch dashed" style="border-color:#333"></span>Assumed / traced</li>' +
+        '<li><span class="swatch" style="border-color:#333"></span>Surveyed (GPS / measured)</li>' +
+        '<li><span class="swatch dashed" style="border-color:#333"></span>Approximate (traced from aerial)</li>' +
+        '<li><span class="swatch dotted" style="border-color:' + ASSUMED + '"></span>Assumed (e.g. straight line): needs surveying</li>' +
         '<li class="ends">Fibre ends: <b>P</b> patch panel, <b>S</b> splice closure, <b>W</b> wall box, <b>C</b> cabinet, <b>B</b> pedestal, <b>O</b> ONT</li></ul>' +
         '<div class="note">Tap a cable to highlight its whole route.</div>' +
         '<div class="note">Positions are approximate; check popups for method and accuracy.</div>';
