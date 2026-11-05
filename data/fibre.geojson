@@ -11,7 +11,7 @@
         "source": "Nat, drawn in geojson.io",
         "method": "aerial-trace",
         "surveyed": "2026-11-05",
-        "accuracy_m": 5,
+        "accuracy_m": 2,
         "doc": "fibre.md#f05-2-the-cottage--1-the-cottage-4f-single-mode"
       },
       "geometry": {
@@ -34,7 +34,7 @@
         "source": "Nat, drawn in geojson.io",
         "method": "aerial-trace",
         "surveyed": "2026-11-05",
-        "accuracy_m": 5,
+        "accuracy_m": 2,
         "doc": "fibre.md#f06-2-the-cottage--ty-di-rif-1f-single-mode"
       },
       "geometry": {
@@ -59,7 +59,7 @@
         "source": "Nat (contents); position is the end of F05 as drawn",
         "method": "aerial-trace",
         "surveyed": "2026-11-05",
-        "accuracy_m": 5,
+        "accuracy_m": 2,
         "doc": "fibre.md#1-the-cottage-install",
         "photos": ["c1-wb-2026-11-05.jpg"]
       },
@@ -80,7 +80,7 @@
         "source": "Nat (photo 2026-11-05); position is the shared start of F05 and F06 as drawn",
         "method": "aerial-trace",
         "surveyed": "2026-11-05",
-        "accuracy_m": 5,
+        "accuracy_m": 2,
         "doc": "fibre.md#locations-patch-points",
         "photos": ["c2-enc-2026-11-05.jpg", "c2-enc-inside-2026-11-05.jpg"]
       },
@@ -101,7 +101,7 @@
         "source": "Nat, placed in geojson.io; photo 2026-11-05",
         "method": "aerial-trace",
         "surveyed": "2026-11-05",
-        "accuracy_m": 5,
+        "accuracy_m": 2,
         "doc": "fibre.md#llwyn-dewi-install",
         "photos": ["ld-install-2026-11-05.jpg"]
       },
@@ -124,7 +124,7 @@
         "source": "Nat, placed in geojson.io",
         "method": "aerial-trace",
         "surveyed": "2026-11-05",
-        "accuracy_m": 5
+        "accuracy_m": 2
       },
       "geometry": {
         "type": "Point",
@@ -143,7 +143,7 @@
         "source": "Nat (contents); position is the end of F06 as drawn",
         "method": "aerial-trace",
         "surveyed": "2026-11-05",
-        "accuracy_m": 5,
+        "accuracy_m": 2,
         "doc": "fibre.md#locations-patch-points"
       },
       "geometry": {
