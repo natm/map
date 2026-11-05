@@ -208,7 +208,26 @@
     });
   }
 
-  map.on('popupclose', clearHighlight);
+  // Keep the highlight while a fibre diagram panel is open.
+  map.on('popupclose', function () { if (!(window.FibreNet && window.FibreNet.isOpen())) clearHighlight(); });
+
+  // API for fibre.js (splice and trace diagrams).
+  window.SiteMap = {
+    map: map,
+    clearHighlight: clearHighlight,
+    closePopup: function () { map.closePopup(); },
+    highlightIds: function (ids, fit) {
+      clearHighlight();
+      var b = null;
+      ids.forEach(function (id) {
+        var l = lineById[id];
+        if (!l) return;
+        highlightLine(l);
+        b = b ? b.extend(l.getBounds()) : L.latLngBounds(l.getBounds().getSouthWest(), l.getBounds().getNorthEast());
+      });
+      if (fit && b) map.fitBounds(b, { padding: [40, 40], maxZoom: 19 });
+    }
+  };
 
   var overlays = {};
   LAYERS.forEach(function (l) {
@@ -229,7 +248,9 @@
           pointToLayer: function (f, latlng) { return pointMarker(name, f, latlng); },
           onEachFeature: function (f, layer) {
             var p = f.properties || {};
-            layer.bindPopup(popupHtml(p), { maxWidth: 320, minWidth: p.photos ? 260 : 50 });
+            layer.bindPopup(function () {
+              return popupHtml(p) + (window.FibreNet ? window.FibreNet.popupExtras(p) : '');
+            }, { maxWidth: 320, minWidth: p.photos ? 260 : 50 });
             layer.on('popupopen', function (e) {
               var img = e.popup.getElement() && e.popup.getElement().querySelector('img.photo');
               if (img && !img.complete) img.addEventListener('load', function () { e.popup.update(); });
@@ -237,7 +258,10 @@
             var gt = f.geometry && f.geometry.type;
             if (gt === 'LineString' || gt === 'MultiLineString') {
               if (p.id) lineById[p.id] = layer;
-              layer.on('popupopen', function () { clearHighlight(); highlightLine(layer); });
+              layer.on('popupopen', function () {
+                clearHighlight(); highlightLine(layer);
+                if (name === 'fibre' && window.FibreNet) window.FibreNet.cableOpened(p.id);
+              });
             } else if (p.cables) {
               // A junction: highlight every cable that ends or is spliced here.
               layer.on('popupopen', function () {
