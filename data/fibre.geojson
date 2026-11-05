@@ -75,7 +75,7 @@
         "type": "patch_point",
         "enclosure": "patch_panel",
         "cables": "F04, F05, F06, F07",
-        "notes": "Grey outdoor enclosure on the house wall with a 16-port LC patch box ('Llwynygorras Community'): ports 1-8 the 8-fibre cable from the woods, 9 to Ty Di rif, 12 to Llwyn Dewi, 13-16 to 1 The Cottage. Also holds 2 The Cottage's SFP media converter.",
+        "notes": "Grey outdoor enclosure on the house wall with a 16-port LC patch box ('Llwynygorras Community'): ports 1-8 the 8-fibre cable from the woods, 9 to Ty Di rif, 12 to Llwyn Dewi, 13-16 to 1 The Cottage. Also holds 2 The Cottage's SFP media converter. Patching: LC1 to LC9 (Ty Di rif), LC6 to LC13 (1 The Cottage), LC7 to the media converter (2 The Cottage), LC8 to LC12 (Llwyn Dewi).",
         "source": "Nat (photo 2026-11-05); position is the shared start of F05 and F06 as drawn",
         "method": "aerial-trace",
         "surveyed": "2026-11-05",
