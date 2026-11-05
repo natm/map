@@ -211,7 +211,7 @@
       if (i >= seq.length && i - 1 !== first) inner += endNote(seq[i - 1].key, false);
       else if (i >= seq.length) inner += endNote(seq[i - 1].key, false);
       html += '<div class="fx-node"><div class="fx-nname">' + esc(node.name || nid) + (node.where ? '<span class="fx-sub">' + esc(node.where) + '</span>' : '') +
-        (node.documented ? ' <button class="fx-btn small" data-fx="splice" data-node="' + esc(nid) + '">splices</button>' : '') + '</div>' + inner + '</div>';
+        (node.documented ? ' <button class="fx-btn small" data-fx="splice" data-node="' + esc(nid) + '">🔀 Splice diagram</button>' : '') + '</div>' + inner + '</div>';
     }
     return '<div class="fx-trace">' + html + '</div>';
   }
