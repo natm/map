@@ -1,0 +1,18 @@
+Map data in this repository (the files in data/) is
+
+  Copyright (c) 2026 Nat Morris
+
+and is licensed under the Creative Commons Attribution 4.0 International
+licence (CC BY 4.0). You may share and adapt it for any purpose, provided you
+give appropriate credit ("© Nat Morris, natm.github.io/map"), link to the
+licence, and indicate if changes were made.
+
+Full licence text: https://creativecommons.org/licenses/by/4.0/legalcode
+
+Third-party components keep their own licences:
+
+- Leaflet 1.9.4 (vendor/leaflet/): BSD 2-Clause licence, see
+  vendor/leaflet/LICENSE.
+- Map tiles are not stored in this repository. They are loaded by the browser
+  from OpenStreetMap (© OpenStreetMap contributors, ODbL) and Esri World
+  Imagery (© Esri and its imagery providers), under those providers' terms.
