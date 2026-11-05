@@ -44,7 +44,7 @@
   var ASSUMED = '#e040fb';
   function tier(p) {
     var m = (p.method || '').toLowerCase();
-    if (m === 'gps-phone' || m === 'gps-rtk' || m === 'measured') return 'surveyed';
+    if (m === 'gps-phone' || m === 'gps-rtk' || m === 'measured' || m === 'confirmed') return 'surveyed';
     if (m === 'aerial-trace' || m === 'description') return 'approx';
     return 'assumed';
   }
@@ -54,7 +54,7 @@
   function accuracyBadge(p, isLine) {
     var t = tier(p), what = isLine ? 'Route' : 'Position';
     var acc = p.accuracy_m ? ' (about ±' + p.accuracy_m + ' m)' : '';
-    var how = { 'gps-phone': 'phone GPS', 'gps-rtk': 'RTK GPS', 'measured': 'measured', 'aerial-trace': 'traced from the aerial photo', 'description': 'from a description' }[(p.method || '').toLowerCase()] || '';
+    var how = { 'gps-phone': 'phone GPS', 'gps-rtk': 'RTK GPS', 'measured': 'measured', 'confirmed': 'confirmed on site', 'aerial-trace': 'traced from the aerial photo', 'description': 'from a description' }[(p.method || '').toLowerCase()] || '';
     if (t === 'surveyed') return '<div class="acc acc-ok">✅ ' + what + ' surveyed: ' + how + acc + '</div>';
     if (t === 'approx') return '<div class="acc acc-approx">〰️ ' + what + ' approximate: ' + how + acc + '. Survey on the ground to confirm.</div>';
     return '<div class="acc acc-assumed">⚠️ ' + what + ' assumed' + (isLine ? ': a straight line between its ends, not the real route' : '') + '. Needs surveying.</div>';
