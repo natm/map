@@ -91,6 +91,27 @@
     {
       "type": "Feature",
       "properties": {
+        "id": "LD",
+        "name": "Llwyn Dewi: LC wall box (indoors)",
+        "type": "patch_point",
+        "enclosure": "wall_box",
+        "cables": "F07",
+        "notes": "LC wall box labelled 'Llwyn-y-Gorras community fibre'. F07 (black single-fibre drop) comes up through the floor; a yellow LC patch lead goes to Llwyn Dewi's MikroTik router SFP. F07's route is not drawn yet.",
+        "source": "Nat, placed in geojson.io; photo 2026-11-05",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 5,
+        "doc": "fibre.md#llwyn-dewi-install",
+        "photos": ["ld-install-2026-11-05.jpg"]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067982, 51.938461]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "id": "TDR-WB",
         "name": "Ty Di rif: LC wall box",
         "type": "patch_point",

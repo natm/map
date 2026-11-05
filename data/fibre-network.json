@@ -32,6 +32,30 @@
       "fibres": 1,
       "a": "C2-ENC",
       "b": "LD"
+    },
+    "F09": {
+      "name": "Barn rack to the barn manhole closure",
+      "fibres": 40,
+      "a": "BARN",
+      "b": "MH01"
+    },
+    "F10": {
+      "name": "Barn manhole closure to the treehouse",
+      "fibres": 8,
+      "a": "MH01",
+      "b": "TREEHOUSE"
+    },
+    "F12": {
+      "name": "Barn manhole closure to the greenhouse",
+      "fibres": 8,
+      "a": "MH01",
+      "b": "GREENHOUSE"
+    },
+    "F13": {
+      "name": "Barn manhole closure to the workshop",
+      "fibres": 8,
+      "a": "MH01",
+      "b": "WORKSHOP"
     }
   },
   "nodes": {
@@ -227,6 +251,38 @@
           "assumed": true
         }
       ]
+    },
+    "BARN": {
+      "name": "Barn rack",
+      "documented": false
+    },
+    "MH01": {
+      "name": "Barn manhole splice closure",
+      "where": "CommScope inline closure in the manhole outside the barn",
+      "documented": false,
+      "layout": {
+        "left": [
+          "F09"
+        ],
+        "right": [
+          "F12",
+          "F10",
+          "F13"
+        ]
+      },
+      "notes": "F09 (yellow, labelled 40-core, to the barn rack) is spliced to F12 (greenhouse), F10 (treehouse) and F13 (workshop), each 8-fibre, in about 6 splice trays. Which fibres are spliced to which is not yet known."
+    },
+    "TREEHOUSE": {
+      "name": "Treehouse",
+      "documented": false
+    },
+    "GREENHOUSE": {
+      "name": "Greenhouse",
+      "documented": false
+    },
+    "WORKSHOP": {
+      "name": "Workshop",
+      "documented": false
     }
   },
   "circuits": [
