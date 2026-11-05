@@ -55,12 +55,13 @@
         "type": "patch_point",
         "enclosure": "wall_box",
         "cables": "F05",
-        "notes": "Wall-mounted LC box with 2 LC connectors; both are spliced, to 2 of F05's 4 fibres.",
+        "notes": "Wall-mounted LC box with 2 LC connectors; both are spliced, to 2 of F05's 4 fibres. A duplex LC patch lead runs from it to 1 The Cottage's UniFi gateway (SFP).",
         "source": "Nat (contents); position is the end of F05 as drawn",
         "method": "aerial-trace",
         "surveyed": "2026-11-05",
         "accuracy_m": 5,
-        "doc": "fibre.md#locations-patch-points"
+        "doc": "fibre.md#1-the-cottage-install",
+        "photos": ["c1-wb-2026-11-05.jpg"]
       },
       "geometry": {
         "type": "Point",

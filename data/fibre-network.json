@@ -183,7 +183,7 @@
     },
     "C1-WB": {
       "name": "1 The Cottage wall box",
-      "where": "LC wall box at 1 The Cottage",
+      "where": "Indoors at 1 The Cottage, on a timber batten next to their network kit",
       "documented": true,
       "layout": {
         "left": [
@@ -205,6 +205,22 @@
           "b": "P:1-2",
           "note": "2 of the 4 fibres are spliced; which 2 is not known",
           "assumed": true
+        },
+        {
+          "kind": "patch",
+          "a": "P:1",
+          "b": "GW:sfp1",
+          "note": "A duplex LC lead is plugged into both wall-box ports; one leg goes to the gateway's SFP, the other appears to hang loose. Which port is which is assumed",
+          "assumed": true
+        }
+      ],
+      "devices": [
+        {
+          "id": "GW",
+          "name": "UniFi gateway with an SFP port (1 The Cottage's router; model not known)",
+          "ports": [
+            "sfp1"
+          ]
         }
       ]
     },
