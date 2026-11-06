@@ -541,6 +541,62 @@
       tx = Math.max(4, (vp.clientWidth - w * sc) / 2); ty = 4; apply();
     }
     function centre() { return { x: vp.clientWidth / 2, y: vp.clientHeight / 2 }; }
+    // Cable links: where the same cable appears in two enclosures, join its two sheaths with a line,
+    // labelled with the cable ID. Lines go behind the cards (so they show in the gaps); labels on top,
+    // at the point nearest the middle of the line that's clear of every card.
+    function drawLinks() {
+      Array.prototype.forEach.call(st.querySelectorAll('.fx-cablinks'), function (o) { o.parentNode.removeChild(o); });
+      var marks = st.querySelectorAll('.fx-cab');
+      if (!marks.length) return;
+      var sr = st.getBoundingClientRect(), by = {};
+      function rel(r) { return { l: (r.left - sr.left) / sc, t: (r.top - sr.top) / sc, r: (r.right - sr.left) / sc, b: (r.bottom - sr.top) / sc }; }
+      var cards = Array.prototype.map.call(st.querySelectorAll('.fx-allsp .fx-scroll'), function (el) { return rel(el.getBoundingClientRect()); });
+      function inCard(x, y) { return cards.some(function (c) { return x > c.l - 4 && x < c.r + 4 && y > c.t - 4 && y < c.b + 4; }); }
+      Array.prototype.forEach.call(marks, function (m) {
+        var r = rel(m.getBoundingClientRect()), id = m.getAttribute('data-cable'), side = m.getAttribute('data-side');
+        (by[id] = by[id] || []).push({ x: side === 'L' ? r.l : r.r, y: (r.t + r.b) / 2, side: side });
+      });
+      var W = st.offsetWidth, H = st.offsetHeight, back = [], front = [];
+      var SVGNS = 'http://www.w3.org/2000/svg';
+      var tmp = document.createElementNS(SVGNS, 'svg'), probe = document.createElementNS(SVGNS, 'path');
+      tmp.style.position = 'absolute'; tmp.style.visibility = 'hidden'; tmp.appendChild(probe); st.appendChild(tmp);
+      Object.keys(by).forEach(function (id) {
+        var e = by[id];
+        for (var i = 1; i < e.length; i++) {
+          var a = e[0], b = e[i];
+          var dx = Math.max(50, Math.abs(b.x - a.x) * 0.3);
+          var ca = a.x + (a.side === 'L' ? -dx : dx), cb = b.x + (b.side === 'L' ? -dx : dx);
+          var d = 'M' + a.x + ',' + a.y + ' C' + ca + ',' + a.y + ' ' + cb + ',' + b.y + ' ' + b.x + ',' + b.y;
+          probe.setAttribute('d', d);
+          var len = probe.getTotalLength(), lp = null;
+          for (var k = 0; k <= 40 && !lp; k++) {
+            var f = 0.5 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) / 40;
+            if (f < 0 || f > 1) continue;
+            var q = probe.getPointAtLength(len * f);
+            if (!inCard(q.x, q.y)) lp = q;
+          }
+          lp = lp || probe.getPointAtLength(len / 2);
+          var tip = '<title>Cable ' + esc(id) + ': ' + esc((net.cables[id] || {}).name || '') + '</title>';
+          back.push('<g class="fx-cablink" data-fx="cable" data-id="' + esc(id) + '">' + tip +
+            '<path d="' + d + '" fill="none" stroke="transparent" stroke-width="14"/>' +
+            '<path d="' + d + '" fill="none" stroke="#0f1a20" stroke-width="6" stroke-linecap="round"/>' +
+            '<path class="core" d="' + d + '" fill="none" stroke="#ffb74d" stroke-width="3" stroke-linecap="round" stroke-dasharray="10 5"/></g>');
+          front.push('<g class="fx-cablink" data-fx="cable" data-id="' + esc(id) + '">' + tip +
+            '<rect x="' + (lp.x - 18) + '" y="' + (lp.y - 9) + '" width="36" height="18" rx="9" fill="#ffb74d" stroke="#0f1a20"/>' +
+            '<text x="' + lp.x + '" y="' + (lp.y + 4) + '" text-anchor="middle" font-size="11" font-weight="bold" fill="#0f1a20">' + esc(id) + '</text></g>');
+        }
+      });
+      st.removeChild(tmp);
+      if (!back.length) return;
+      [['back', back], ['front', front]].forEach(function (pair) {
+        var o = document.createElementNS(SVGNS, 'svg');
+        o.setAttribute('class', 'fx-cablinks ' + pair[0]);
+        o.setAttribute('width', W); o.setAttribute('height', H);
+        o.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+        o.innerHTML = pair[1].join('');
+        if (pair[0] === 'back') st.insertBefore(o, st.firstChild); else st.appendChild(o);
+      });
+    }
     root.querySelector('.fx-zoom-btns').addEventListener('click', function (e) {
       var b = e.target.closest('[data-z]'); if (!b) return;
       touched = true;
@@ -595,8 +651,9 @@
     // A drag ends with a click on whatever is under the pointer: swallow it.
     vp.addEventListener('click', function (e) { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
     // Refit when the window is resized, until the user has zoomed or panned.
-    if (window.ResizeObserver) new ResizeObserver(function () { if (!touched && vp.clientWidth) { layout(); fit(); } }).observe(vp);
-    requestAnimationFrame(function () { layout(); fit(); });
+    if (window.ResizeObserver) new ResizeObserver(function () { if (!touched && vp.clientWidth) { layout(); fit(); drawLinks(); } }).observe(vp);
+    requestAnimationFrame(function () { layout(); fit(); drawLinks(); });
+    setTimeout(function () { if (!touched) { layout(); fit(); } drawLinks(); }, 60);   // in case the first frame came before layout
   }
   function showAllSplices() {
     var sb = showView('schematic:splices', { icon: '📐', name: 'All splices (in use only)' }, allSplicesHtml(), { cls: 'huge zoomable' });
@@ -652,6 +709,11 @@
         if ((adj[k] || []).some(function (x) { return x.e.t === 'patch' || parseKey(x.to).t === 'D'; })) live[c] = true;
       });
       Object.keys(fibresIn).forEach(function (c) { if (fibresIn[c] >= 2) live[c] = true; });
+      // Anything a circuit runs through is in use too, even where the next hop isn't recorded yet
+      // (e.g. a port known to be patched, but not yet to what).
+      (net.circuits || []).forEach(function (ci) {
+        (traces[ci.id] || []).forEach(function (st0) { if (st0.key && comp[st0.key] !== undefined) live[comp[st0.key]] = true; });
+      });
     }
     function isLive(k) { return comp[k] !== undefined && !!live[comp[k]]; }
     function cOf(k) { return gpath[k] !== undefined ? gpath[k] : nid + '-' + (comp[k] !== undefined ? comp[k] : (comp[k] = nextComp++)); }
@@ -717,6 +779,8 @@
         out.push('<rect x="' + sx + '" y="' + (y + HH + j0 * RH - 2) + '" width="16" height="' + ((j1 - j0 + 1) * RH + 4) + '" rx="6" fill="' + tc + '" stroke="#455a64"/>');
         j0 = j1 + 1;
       }
+      // Invisible marker over the whole sheath, so the All splices view can join the two ends of a cable.
+      out.push('<rect class="fx-cab" data-cable="' + esc(id) + '" data-side="' + side + '" x="' + sx + '" y="' + (y + HH - 2) + '" width="16" height="' + (shown.length * RH + 4) + '" fill="none" stroke="none"/>');
       // Fibre pills
       var px = side === 'L' ? x + 18 : x, pw = TW - 18;
       shown.forEach(function (i, j) {

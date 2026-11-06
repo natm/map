@@ -339,3 +339,12 @@ body.editing .leaflet-marker-icon { cursor: move; }
 .fx-zoom-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; padding: 4px; box-sizing: border-box; }
 .fx-win.zoomable .fx-win-body { display: flex; flex-direction: column; overflow: hidden; }
 .fx-win.zoomable .fx-zoom-vp { flex: 1; height: auto; min-height: 0; }
+
+/* All splices: lines joining the two ends of the same cable */
+.fx-cablinks { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.fx-cablinks.back { z-index: 0; }
+.fx-cablinks.front { z-index: 2; }
+.fx-allsp-grid { position: relative; z-index: 1; gap: 26px 44px; padding-left: 36px; }
+.fx-cablink { pointer-events: auto; cursor: pointer; opacity: 0.85; }
+.fx-cablink:hover { opacity: 1; }
+.fx-cablink:hover .core { stroke: #ffe0b2; }
