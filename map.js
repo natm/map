@@ -561,7 +561,7 @@
       '<li><span class="swatch dashed" style="border-color:#eceff1"></span>Approximate (traced from aerial)</li>' +
       '<li><span class="swatch dotted" style="border-color:' + ASSUMED + '"></span>Assumed: needs surveying</li></ul>' +
       '<div class="tb-sub">Fibre ends: <b>P</b> patch panel · <b>S</b> splice closure · <b>W</b> wall box · <b>C</b> cabinet · <b>B</b> pedestal · <b>O</b> ONT</div>' +
-      '<div class="tb-sub">Icons: 🧵 cable · ⭕ duct · 🕳️ chamber · 📦 box · 🔀 splices · 🧭 link · 📍 details</div>' +
+      '<div class="tb-sub">Icons: 🧵 cable · ⭕ duct · 🕳️ chamber · 📦 box · 🔀 splices · 🧭 circuit · 📍 details</div>' +
       '<div class="tb-sub">Positions are approximate unless surveyed; each popup says how accurate it is.</div>' +
       '<div class="tb-sub">Last updated ' + UPDATED + '</div>';
   }
@@ -583,20 +583,20 @@
       var ch = Object.keys(featureById).filter(function (k) { var p = featureById[k].feature.properties || {}; return ['manhole', 'chamber', 'valve_box', 'draw_pit'].indexOf(p.type) >= 0; }).sort();
       return ch.map(function (k) {
         var p = featureById[k].feature.properties;
-        return '<a href="#feature=' + esc(k) + '" class="tb-item"><b>🕳️ ' + esc(k) + '</b> <span>' + esc(p.name || '') + '</span><span class="tb-meta">' + esc([p.owner, p.size_mm ? p.size_mm + ' mm' : ''].filter(Boolean).join(' · ')) + '</span></a>';
+        return '<a href="#feature=' + esc(k) + '" class="tb-item tb-line"><b>🕳️ ' + esc(k) + '</b><span class="tb-name">' + esc(p.name || '') + '</span><span class="tb-meta">' + esc([p.owner, p.size_mm ? p.size_mm + ' mm' : ''].filter(Boolean).join(' · ')) + '</span></a>';
       }).join('') || '<div class="tb-sub">No chambers yet.</div>';
     }
     if (!F) return '<div class="tb-sub">Loading…</div>';
     if (kind === 'links') return F.circuits.map(function (c) {
-      return '<a href="#" class="tb-item" data-fx="trace" data-circuit="' + esc(c.id) + '"><b>🧭 ' + esc(c.name) + '</b></a>';
-    }).join('') || '<div class="tb-sub">No links recorded.</div>';
+      return '<a href="#" class="tb-item tb-line" data-fx="trace" data-circuit="' + esc(c.id) + '"><b>🧭 ' + esc(c.name) + '</b></a>';
+    }).join('') || '<div class="tb-sub">No circuits recorded.</div>';
     if (kind === 'cables') return F.cables.map(function (c) {
       var l = lineById[c.id], t = l ? tier(l.feature.properties || {}) : 'none';
       var badge = { surveyed: '<span class="tb-chip ok">surveyed</span>', approx: '<span class="tb-chip approx">approx</span>', assumed: '<span class="tb-chip assumed">assumed</span>', none: '<span class="tb-chip">not on map</span>' }[t];
-      return '<a href="#" class="tb-item" data-fx="cable" data-id="' + esc(c.id) + '"><b>🧵 ' + esc(c.id) + '</b> <span>' + esc(c.name) + '</span><span class="tb-meta">' + c.fibres + 'F ' + badge + '</span></a>';
+      return '<a href="#" class="tb-item tb-line" data-fx="cable" data-id="' + esc(c.id) + '"><b>🧵 ' + esc(c.id) + '</b><span class="tb-name">' + esc(c.name) + '</span><span class="tb-meta">' + c.fibres + 'F ' + badge + '</span></a>';
     }).join('');
     if (kind === 'enclosures') return F.nodes.map(function (n) {
-      return '<div class="tb-item"><b>' + (n.documented ? '🔀' : '❓') + ' ' + esc(n.name) + '</b><span class="tb-meta">' +
+      return '<div class="tb-item tb-line"><b class="tb-name">' + (n.documented ? '🔀' : '❓') + ' ' + esc(n.name) + '</b><span class="tb-meta">' +
         (n.documented ? '<a href="#" data-fx="splice" data-node="' + esc(n.id) + '">splices</a>' : 'not documented') +
         (featureById[n.id] ? ' · <a href="#feature=' + esc(n.id) + '">📍 on map</a>' : '') + '</span></div>';
     }).join('');
@@ -604,7 +604,7 @@
   }
 
   var TB = [
-    ['layers', '🗂️', 'Layers'], ['links', '🧭', 'Links'], ['cables', '🧵', 'Cables'],
+    ['layers', '🗂️', 'Layers'], ['links', '🧭', 'Circuits'], ['cables', '🧵', 'Cables'],
     ['enclosures', '🔀', 'Enclosures'], ['chambers', '🕳️', 'Chambers'], ['legend', '🔑', 'Legend']
   ];
   var bar = L.DomUtil.create('div', 'tb', document.body);
@@ -622,7 +622,7 @@
     var body = kind === 'legend' ? legendHtml() : kind === 'layers' ? layersHtml() : '<div class="tb-list">' + listHtml(kind) + '</div>';
     dd.innerHTML = '<div class="tb-dd-head">' + b[1] + ' ' + b[2] + '<button class="tb-x" title="Close">&times;</button></div><div class="tb-dd-body">' + body + '</div>';
     dd.classList.add('open');
-    Array.prototype.forEach.call(bar.querySelectorAll('.tb-btn'), function (x) { x.classList.toggle('on', x.getAttribute('data-tb') === kind); });
+    Array.prototype.forEach.call(bar.querySelectorAll('.tb-btn'), function (x) { if (x.getAttribute('data-tb') !== 'legend') x.classList.toggle('on', x.getAttribute('data-tb') === kind); });
     dd.querySelector('.tb-x').addEventListener('click', closeDd);
     if (kind === 'layers') {
       Array.prototype.forEach.call(dd.querySelectorAll('input[name="tb-base"]'), function (r) {
@@ -638,9 +638,25 @@
   }
   function closeDd() {
     ddOpen = null; dd.classList.remove('open');
-    Array.prototype.forEach.call(bar.querySelectorAll('.tb-btn'), function (x) { x.classList.remove('on'); });
+    Array.prototype.forEach.call(bar.querySelectorAll('.tb-btn'), function (x) { if (x.getAttribute('data-tb') !== 'legend') x.classList.remove('on'); });
   }
-  bar.addEventListener('click', function (e) { var b = e.target.closest('[data-tb]'); if (b) openDd(b.getAttribute('data-tb')); });
+  // The legend is its own docked panel (bottom left) that stays open while other menus and the map are used.
+  var leg = L.DomUtil.create('div', 'tb-legend-panel', document.body);
+  L.DomEvent.disableClickPropagation(leg); L.DomEvent.disableScrollPropagation(leg);
+  function setLegend(on) {
+    leg.innerHTML = on ? '<div class="tb-dd-head">🔑 Legend<button class="tb-x" title="Close">&times;</button></div><div class="tb-dd-body">' + legendHtml() + '</div>' : '';
+    leg.classList.toggle('open', on);
+    var lb = bar.querySelector('[data-tb="legend"]'); if (lb) lb.classList.toggle('on', on);
+    if (on) leg.querySelector('.tb-x').addEventListener('click', function () { setLegend(false); });
+    try { localStorage.setItem('map-legend', on ? '1' : '0'); } catch (e) {}
+  }
+  try { if (localStorage.getItem('map-legend') === '1') setTimeout(function () { setLegend(true); }, 0); } catch (e) {}
+  bar.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-tb]');
+    if (!b) return;
+    if (b.getAttribute('data-tb') === 'legend') setLegend(!leg.classList.contains('open'));
+    else openDd(b.getAttribute('data-tb'));
+  });
   // Choosing something in a list closes the drop-down (the trace, cable view or popup then opens).
   dd.addEventListener('click', function (e) { if (e.target.closest('.tb-item a, a.tb-item, .tb-item[data-fx]')) setTimeout(closeDd, 0); });
 })();
