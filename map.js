@@ -123,7 +123,7 @@
     var m;
     switch (layer) {
       case 'buildings':
-        m = L.marker(latlng, { icon: icon('square', c, '', 14) });
+        m = L.marker(latlng, { icon: t === 'postbox' ? icon('square', '#c0392b', '✉', 16) : icon('square', c, '', 14) });
         break;
       case 'chambers':
         m = L.marker(latlng, { icon: icon('square', c, '', 14) });
@@ -135,14 +135,17 @@
         else m = L.circleMarker(latlng, { radius: 5, color: '#fff', weight: 1.5, fillColor: c, fillOpacity: 1 });
         break;
       case 'openreach':
-        m = L.circleMarker(latlng, { radius: t === 'pole' ? 5 : 6, color: '#fff', weight: 1.5, fillColor: c, fillOpacity: 1 });
+        // Poles as a lettered circle so they read as assets, like the fibre ends.
+        m = t === 'pole' ? L.marker(latlng, { icon: icon('circle', c, 'T', 18) })
+          : L.circleMarker(latlng, { radius: 6, color: '#fff', weight: 1.5, fillColor: c, fillOpacity: 1 });
         break;
       case 'fibre':
+        if (t === 'duct_end') { m = L.marker(latlng, { icon: icon('circle', '#607d8b', 'D', 16) }); break; }
         // Lettered box for what the cable ends or is spliced in (property 'enclosure').
         m = L.marker(latlng, { icon: icon('square', t === 'splice' ? '#c0392b' : '#2c3e50', ENCLOSURE[p.enclosure] || (t === 'splice' ? 'S' : 'P'), 18) });
         break;
       case 'electric':
-        m = L.marker(latlng, { icon: icon('square', c, t === 'consumer_unit' ? 'CU' : '', 18) });
+        m = L.marker(latlng, { icon: t === 'supply_point' ? icon('circle', c, '⚡', 20) : icon('square', c, t === 'consumer_unit' ? 'CU' : '', 18) });
         break;
       case 'cctv':
         m = L.circleMarker(latlng, { radius: 6, color: '#fff', weight: 1.5, fillColor: c, fillOpacity: 1 });
@@ -151,8 +154,8 @@
         m = L.circleMarker(latlng, { radius: 5, fillColor: c, fillOpacity: 1 });
     }
     var label = p.id || '';
-    if (label && (layer === 'chambers' || layer === 'buildings')) {
-      m.bindTooltip(label === 'B00' ? (p.name || label) : label, { permanent: true, direction: 'right', offset: [8, 0], className: 'pt-label' });
+    if (label && (layer === 'chambers' || layer === 'buildings' || layer === 'openreach' && t === 'pole' || layer === 'electric' || t === 'duct_end')) {
+      m.bindTooltip(label === 'B00' || t === 'postbox' ? (p.name || label) : label, { permanent: true, direction: 'right', offset: [8, 0], className: 'pt-label' });
     }
     return m;
   }
@@ -597,6 +600,7 @@
       '<li><span class="swatch" style="border-color:#eceff1"></span>Surveyed (GPS / measured)</li>' +
       '<li><span class="swatch dashed" style="border-color:#eceff1"></span>Approximate (traced from aerial)</li>' +
       '<li><span class="swatch dotted" style="border-color:' + ASSUMED + '"></span>Assumed: needs surveying</li></ul>' +
+      '<div class="tb-sub">Points: <b style="color:#8b5a2b">T</b> Openreach pole · <b style="color:#d62728">⚡</b> electricity pole / transformer · <b>D</b> duct end · <b style="color:#c0392b">✉</b> postbox · ▪ chamber</div>' +
       '<div class="tb-sub">Fibre ends: <b>P</b> patch panel · <b>S</b> splice closure · <b>W</b> wall box · <b>C</b> cabinet · <b>B</b> pedestal · <b>O</b> ONT</div>' +
       '<div class="tb-sub">Icons: 🧵 cable · ⭕ duct · 🕳️ chamber · 📦 box · 🔀 splices · 🧭 circuit · 📍 details</div>' +
       '<div class="tb-sub">Positions are approximate unless surveyed; each popup says how accurate it is.</div>' +
@@ -674,6 +678,10 @@
     if (t === 'duct' || t === 'twinwall') return '⭕';
     if (CHAMBER_TYPES.indexOf(t) >= 0) return '🕳️';
     if (t === 'building') return '🏠';
+    if (t === 'pole') return '🪵';
+    if (t === 'supply_point') return '⚡';
+    if (t === 'postbox') return '📮';
+    if (t === 'duct_end') return '⭕';
     if (t === 'patch_point' || t === 'splice' || p.enclosure) return '📦';
     return '📍';
   }
