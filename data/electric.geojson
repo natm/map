@@ -19,6 +19,7 @@
         "type": "Point",
         "coordinates": [-5.066762, 51.938404]
       }
-    }
+    },
+    {"type": "Feature", "properties": {"id": "PATIO", "name": "Patio wall enclosure (Sonoff)", "type": "enclosure", "photos": ["patio-enclosure-2026-11-06.jpg"], "notes": "Grey junction enclosure on the patio wall beside an outdoor double socket, cables down into black conduit; contains a Sonoff (Nat, 2026-11-06). What it switches not recorded yet.", "source": "Nat, placed in map edit mode 2026-11-06T13:22Z (by eye on the aerial)", "method": "aerial-trace", "surveyed": "2026-11-06", "accuracy_m": 2}, "geometry": {"type": "Point", "coordinates": [-5.067119, 51.938696]}}
   ]
 }

@@ -37,7 +37,7 @@
         "type": "LineString",
         "coordinates": [
           [-5.065734, 51.939127],
-          [-5.067004, 51.938521]
+          [-5.06614, 51.938874]
         ]
       }
     },
@@ -50,14 +50,14 @@
         "owner": "openreach",
         "photos": ["orp02-pole-17-2026-11-06.jpg"],
         "notes": "Openreach telephone pole in the hedge, carrying overhead lines; number plate \"17\" under a blue band, and a yellow warning label (Nat, 2026-11-06).",
-        "source": "Nat on site with OS Maps Locate (phone GPS), 12:56 2026-11-06: SM 89305 31119. Phone GPS was unreliable nearby this day",
-        "method": "gps-phone",
+        "source": "Nat on site with OS Maps Locate (phone GPS), 12:56 2026-11-06: SM 89305 31119. Phone GPS was unreliable nearby this day; moved by Nat in map edit mode 2026-11-06 (174.4 m)",
+        "method": "aerial-trace",
         "surveyed": "2026-11-06",
-        "accuracy_m": 10
+        "accuracy_m": 2
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-5.066607, 51.938598]
+        "coordinates": [-5.064799, 51.939702]
       }
     }
   ]
