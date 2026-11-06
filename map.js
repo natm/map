@@ -21,7 +21,31 @@
     maxNativeZoom: 19,
     attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Vantor/Maxar, Earthstar Geographics, and the GIS User Community'
   });
-  aerial.addTo(map);
+  // Ordnance Survey maps, served by Pembrokeshire County Council's mapping service (WMTS, web Mercator).
+  // Used with attribution while we ask PCC whether that's OK (Nat, 2026-11-06); see map/README.md.
+  function pccOs(layer) {
+    return L.tileLayer('https://osmaps.pembrokeshire.gov.uk/maps/osmaps/wms/?pcc=true&SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=' + layer +
+      '&STYLE=default&TILEMATRIXSET=EPSG:3857&TILEMATRIX=EPSG:3857:{z}&TILEROW={y}&TILECOL={x}&FORMAT=image/png', {
+      minZoom: 7, maxZoom: 24, maxNativeZoom: 20,
+      attribution: 'Contains OS data &copy; Crown copyright and database rights ' + new Date().getFullYear() + ' Ordnance Survey, via <a href="https://osmaps.pembrokeshire.gov.uk/" target="_blank" rel="noopener">Pembrokeshire County Council</a>'
+    });
+  }
+  var BASES = [
+    ['aerial', '🛰️ Aerial (Esri)', aerial],
+    ['os-road', '🗺️ OS Road (via Pembrokeshire CC)', pccOs('Road_3857')],
+    ['os-outdoor', '🥾 OS Outdoor (via Pembrokeshire CC)', pccOs('Outdoor_3857')],
+    ['os-light', '🗺️ OS Light (via Pembrokeshire CC)', pccOs('Light_3857')],
+    ['osm', '🗺️ OpenStreetMap', osm]
+  ];
+  function setBase(key) {
+    BASES.forEach(function (b) { if (b[0] !== key && map.hasLayer(b[2])) map.removeLayer(b[2]); });
+    var b = BASES.filter(function (x) { return x[0] === key; })[0] || BASES[0];
+    if (!map.hasLayer(b[2])) b[2].addTo(map);
+    try { localStorage.setItem('map-base', b[0]); } catch (e) {}
+  }
+  var savedBase = null;
+  try { savedBase = localStorage.getItem('map-base'); } catch (e) {}
+  setBase(savedBase || 'aerial');
 
   // ---- Styles ----
   var COLOURS = {
@@ -582,8 +606,9 @@
 
   function layersHtml() {
     var base = '<div class="tb-h">Base map</div>' +
-      '<label class="tb-row"><input type="radio" name="tb-base" value="aerial"' + (map.hasLayer(aerial) ? ' checked' : '') + '> 🛰️ Aerial (Esri)</label>' +
-      '<label class="tb-row"><input type="radio" name="tb-base" value="osm"' + (map.hasLayer(osm) ? ' checked' : '') + '> 🗺️ Map (OpenStreetMap)</label>';
+      BASES.map(function (b) {
+        return '<label class="tb-row"><input type="radio" name="tb-base" value="' + b[0] + '"' + (map.hasLayer(b[2]) ? ' checked' : '') + '> ' + b[1] + '</label>';
+      }).join('');
     var ov = '<div class="tb-h">Layers</div>' + LAYERS.map(function (l) {
       return '<label class="tb-row"><input type="checkbox" data-layer="' + l[0] + '"' + (map.hasLayer(groups[l[0]]) ? ' checked' : '') + '> ' + l[1] +
         ' <span class="tb-count">' + (layerCounts[l[0]] || 0) + '</span></label>';
@@ -742,10 +767,7 @@
     dd.querySelector('.tb-x').addEventListener('click', closeDd);
     if (kind === 'layers') {
       Array.prototype.forEach.call(dd.querySelectorAll('input[name="tb-base"]'), function (r) {
-        r.addEventListener('change', function () {
-          var on = r.value === 'aerial' ? aerial : osm, off = r.value === 'aerial' ? osm : aerial;
-          map.removeLayer(off); on.addTo(map);
-        });
+        r.addEventListener('change', function () { setBase(r.value); });
       });
       Array.prototype.forEach.call(dd.querySelectorAll('input[data-layer]'), function (c) {
         c.addEventListener('change', function () { var g = groups[c.getAttribute('data-layer')]; if (c.checked) g.addTo(map); else map.removeLayer(g); });
