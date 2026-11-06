@@ -406,20 +406,10 @@
       (f.props.ducts || []).forEach(function (d) {
         Object.keys(net.cables).forEach(function (cid) { if ((net.cables[cid].route || []).indexOf(d.id) >= 0 && cs.indexOf(cid) < 0) cs.push(cid); });
       });
-      edges.push({ a: ends[0], b: ends[1], id: f.id, n: (f.props.ducts || []).length, cables: cs, duct: true });
+      var sizes = {};
+      (f.props.ducts || []).forEach(function (d) { var k = d.od_mm ? d.od_mm + ' mm' : '?'; sizes[k] = (sizes[k] || 0) + 1; });
+      edges.push({ a: ends[0], b: ends[1], id: f.id, n: (f.props.ducts || []).length, sizes: sizes, cables: cs, duct: true });
       used[ends[0]] = used[ends[1]] = 1;
-    });
-    // Direct runs in cable routes (no duct between two points), e.g. a chamber into a building or enclosure.
-    Object.keys(net.cables).forEach(function (cid) {
-      var r = net.cables[cid].route || [];
-      for (var i = 0; i < r.length - 1; i++) {
-        if (String(r[i]).indexOf('/') > 0 || String(r[i + 1]).indexOf('/') > 0) continue;
-        if (!pos[r[i]] || !pos[r[i + 1]]) continue;
-        var ex = edges.filter(function (e) { return !e.duct && ((e.a === r[i] && e.b === r[i + 1]) || (e.a === r[i + 1] && e.b === r[i])); })[0];
-        if (ex) { if (ex.cables.indexOf(cid) < 0) ex.cables.push(cid); continue; }
-        edges.push({ a: r[i], b: r[i + 1], cables: [cid], duct: false });
-        used[r[i]] = used[r[i + 1]] = 1;
-      }
     });
     feats.forEach(function (f) { if (CH.indexOf(f.props.type) >= 0) used[f.id] = 1; });
     var ids = Object.keys(used);
@@ -453,7 +443,8 @@
         '<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '" stroke="transparent" stroke-width="14"/>' +
         '<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '" stroke="' + col + '" stroke-width="' + (e.duct ? 5 : 2) + '" stroke-linecap="round"' + (e.duct ? '' : ' stroke-dasharray="5 4"') + '/>');
       var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-      var lbl = (e.duct ? '⭕' + (e.n > 1 ? '×' + e.n : '') + ' ' : '') + (e.cables.length ? e.cables.join(' ') : 'empty');
+      // Ducts only: how many and what size; amber = carries cables, grey = empty.
+      var lbl = Object.keys(e.sizes).map(function (k) { return e.sizes[k] + '× ' + k; }).join(' + ') || 'duct';
       out.push('<rect x="' + (mx - lbl.length * 2.9 - 4) + '" y="' + (my - 8) + '" width="' + (lbl.length * 5.8 + 8) + '" height="15" rx="7" fill="#111a22" opacity="0.9"/>' +
         '<text x="' + mx + '" y="' + (my + 3) + '" text-anchor="middle" font-size="9.5" fill="' + (e.cables.length ? '#ffe082' : '#90a4ae') + '">' + esc(lbl) + '</text></g>');
     });
@@ -466,7 +457,7 @@
         '<text x="' + p.x + '" y="' + (p.y + 9) + '" text-anchor="middle" font-size="7.5" fill="#b0bec5">' + esc(short(f.props.name, 16)) + '</text></g>');
     });
     return '<div class="fx-schem-wrap"><svg class="fx-schem fit" xmlns="http://www.w3.org/2000/svg" style="max-width:' + W + 'px" viewBox="0 0 ' + W + ' ' + H + '" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">' + out.join('') + '</svg></div>' +
-      '<p class="fx-note">Every chamber and duct, placed roughly where it is and spread out to read. Square grey boxes are chambers, rounded blue boxes enclosures and buildings. Thick lines are duct routes (⭕×2 = two ducts), dashed lines direct runs; amber lines carry the cables named on them, grey ones are empty. Tap anything to open it.</p>';
+      '<p class="fx-note">Every chamber and duct route, placed roughly where it is and spread out to read. Each line is a duct route between two chambers, labelled with how many ducts and their size (e.g. 1× 63 mm). <span style="color:#ffb300">Amber</span>: has cables in it; grey: empty. Cables aren\'t shown here; tap a duct route to see what\'s in it, or a chamber to open it.</p>';
   }
   function showNetworkSchematic() {
     showView('schematic:network', '📐 Duct network schematic', networkSchematic(), { cls: 'huge' });
