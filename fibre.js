@@ -281,10 +281,28 @@
     var lay = node.layout || {};
     var left = (lay.left || []).filter(function (id) { return cablesHere.indexOf(id) >= 0; });
     var right = (lay.right || []).filter(function (id) { return cablesHere.indexOf(id) >= 0; });
-    cablesHere.forEach(function (id) { if (left.indexOf(id) < 0 && right.indexOf(id) < 0) (left.length <= right.length ? left : right).push(id); });
+    if ((node.panels || []).length || (node.devices || []).length) {
+      // Cables landing on a panel all enter from the left (in layout order), so patch leads have the right-hand side to themselves.
+      left = left.concat(right); right = [];
+      cablesHere.forEach(function (id) { if (left.indexOf(id) < 0) left.push(id); });
+      // Order cables by the first panel row they land on, so splice lines cross as little as possible.
+      var firstRow = function (id) {
+        var best = 1e9, row = 0;
+        (node.panels || []).forEach(function (p) {
+          for (var n = 1; n <= p.ports; n++, row++) {
+            var k = key(nid, 'R', p.id, n);
+            if ((adj[k] || []).some(function (x) { return x.e.t === 'splice' && parseKey(x.to).el === id; })) best = Math.min(best, row);
+          }
+        });
+        return best;
+      };
+      left.sort(function (a, b) { return firstRow(a) - firstRow(b); });
+    } else {
+      cablesHere.forEach(function (id) { if (left.indexOf(id) < 0 && right.indexOf(id) < 0) (left.length <= right.length ? left : right).push(id); });
+    }
     var panels = node.panels || [], devices = node.devices || [];
     var hasMid = panels.length || devices.length;
-    var TW = 120, MW = 250, LANE = 46, GX = 80;
+    var TW = 120, MW = 250, LANE = 46, GX = 100;
     var xL = 8, xM = xL + TW + GX, xR = hasMid ? xM + MW + GX : xL + TW + 200;
     if (!right.length) xR = xM + MW;
     var W = (right.length ? xR + TW : xM + (hasMid ? MW : 0)) + 8;
@@ -297,7 +315,9 @@
       var ts = c.tube_size || 12;
       var h = HH + c.fibres * RH;
       // Header: cable ID, size and where its other end goes
-      out.push(svgText(side === 'L' ? x : x + TW, y + 14, id + ' · ' + c.fibres + 'F → ' + ((net.nodes[other] || {}).name || other),
+      var on = (net.nodes[other] || {}).name || other;
+      if (on.length > 18) on = on.slice(0, 17) + '…';
+      out.push(svgText(side === 'L' ? x : x + TW, y + 14, id + ' · ' + c.fibres + 'F → ' + on,
         { anchor: side === 'L' ? 'start' : 'end', bold: true, size: 10 }));
       // Sheath: one rounded block per tube, in the tube colour (grey for a single-tube cable)
       var sx = side === 'L' ? x : x + TW - 22;
@@ -328,10 +348,11 @@
         var ry = y + HH + i * RH;
         out.push('<rect x="' + x + '" y="' + ry + '" width="26" height="' + RH + '" fill="#fafafa" stroke="#555" stroke-width="0.5"/>');
         out.push(svgText(x + 13, ry + 12, r.n, { anchor: 'middle', size: 10 }));
-        out.push('<rect x="' + (x + 26) + '" y="' + ry + '" width="' + LANE + '" height="' + RH + '" fill="#fffdf2" stroke="#ddd" stroke-width="0.5"/>');
-        out.push(svgText(x + 26 + LANE + 6, ry + 12, r.text || '', { size: 10, fill: '#333' }));
+        // [n][label ........][patch lane]: splices arrive on the left edge, patch leads loop on the right.
+        out.push('<rect x="' + (x + MW - LANE) + '" y="' + ry + '" width="' + LANE + '" height="' + RH + '" fill="#fffdf2" stroke="#ddd" stroke-width="0.5"/>');
+        out.push(svgText(x + 26 + 6, ry + 12, r.text || '', { size: 10, fill: '#333' }));
         if (r.keyRear) anchor[r.keyRear] = { x: x, xr: x + MW, y: ry + RH / 2, side: 'M' };
-        if (r.keyFront) anchor[r.keyFront] = { x: x + 26 + 6, y: ry + RH / 2, side: 'F' };
+        if (r.keyFront) anchor[r.keyFront] = { x: x + MW - LANE + 6, y: ry + RH / 2, side: 'F' };
       });
       return h;
     }
