@@ -75,7 +75,19 @@
       "name": "Barn manhole closure to the treehouse",
       "fibres": 8,
       "a": "MH01-SC",
-      "b": "TREEHOUSE"
+      "b": "TREEHOUSE",
+      "route": [
+        "MH01-SC",
+        "MH01",
+        "MH06",
+        "MH06-MH07/1",
+        "MH07",
+        "MH07-MH08/1",
+        "MH08",
+        "MH21",
+        "TREEHOUSE"
+      ],
+      "route_source": "Nat, 2026-11-06 (MH21 → MH08 → MH07 → MH06 → MH01); how it gets from MH21 to MH08 and from MH06 to MH01 (ducts?) not recorded"
     },
     "F12": {
       "name": "Barn manhole closure to the greenhouse",
