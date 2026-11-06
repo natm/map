@@ -50,18 +50,15 @@
         "name": "Duct route MH07 to MH08 (Front wall to Behind wall)",
         "type": "duct",
         "ducts": [{"id": "MH07-MH08/1", "od_mm": 63, "type": "twinwall", "colour": "black"}],
-        "notes": "Duct route between MH07 and MH08: 1 duct (63 mm black twinwall). ⚠️ Drawn as a straight line between the two chambers: the duct's real path is not known and needs surveying. Cables in it not yet recorded.",
+        "notes": "Duct route between MH07 and MH08: 1 duct (63 mm black twinwall). Path drawn by Nat in map edit mode 2026-11-06 (by eye on the aerial, 4 bend(s), 28.6 m). Cables in it not yet recorded.",
         "doc": "fibre.md#-ducts",
-        "source": "Nat (2026-11-06): which chambers are joined, size and type; path not known",
-        "method": "assumed",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type; path drawn by Nat in map edit mode 2026-11-06",
+        "method": "aerial-trace", "accuracy_m": 2,
         "surveyed": "2026-11-06"
       },
       "geometry": {
         "type": "LineString",
-        "coordinates": [
-          [-5.066913, 51.93854],
-          [-5.066631, 51.938726]
-        ]
+        "coordinates": [[-5.066913, 51.93854], [-5.066835, 51.938591], [-5.066829, 51.938599], [-5.066828, 51.938607], [-5.066807, 51.938619], [-5.066631, 51.938726]]
       }
     },
     {
@@ -155,18 +152,15 @@
         "name": "Duct route MH13 to MH14 (Woods halfway to Neighbors field entrance)",
         "type": "duct",
         "ducts": [{"id": "MH13-MH14/1", "od_mm": 63, "type": "twinwall", "colour": "black"}],
-        "notes": "Duct route between MH13 and MH14: 1 duct (63 mm black twinwall). ⚠️ Drawn as a straight line between the two chambers: the duct's real path is not known and needs surveying. Cables in it not yet recorded.",
+        "notes": "Duct route between MH13 and MH14: 1 duct (63 mm black twinwall). Path drawn by Nat in map edit mode 2026-11-06 (by eye on the aerial, 7 bend(s), 40.1 m). Cables in it not yet recorded.",
         "doc": "fibre.md#-ducts",
-        "source": "Nat (2026-11-06): which chambers are joined, size and type; path not known",
-        "method": "assumed",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type; path drawn by Nat in map edit mode 2026-11-06",
+        "method": "aerial-trace", "accuracy_m": 2,
         "surveyed": "2026-11-06"
       },
       "geometry": {
         "type": "LineString",
-        "coordinates": [
-          [-5.068102, 51.938812],
-          [-5.068291, 51.93853]
-        ]
+        "coordinates": [[-5.068102, 51.938812], [-5.068175, 51.938779], [-5.068203, 51.93875], [-5.068218, 51.938715], [-5.06821, 51.938661], [-5.068154, 51.938619], [-5.068157, 51.938604], [-5.068171, 51.938593], [-5.068291, 51.93853]]
       }
     },
     {

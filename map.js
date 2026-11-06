@@ -521,6 +521,7 @@
       if (worst === 'assumed') { props.method = 'assumed'; delete props.accuracy_m; props.notes += ' ⚠️ Part of the route (a duct or a join) is assumed, so the cable\'s line is too.'; }
       else if (worst === 'surveyed') { props.method = 'measured'; }
       var f2 = { type: 'Feature', properties: props, geometry: { type: 'LineString', coordinates: pts.map(function (p) { return [p.lng, p.lat]; }) } };
+      f2._route = route.slice();   // drawn from its ducts: edit mode reshapes the duct, not this line
       L.geoJSON(f2, geoOptions('fibre')).addTo(groups.fibre);
       return true;
     },
@@ -529,6 +530,7 @@
       if (!a || !b || !a.getLatLng || !b.getLatLng || lineById[id]) return false;
       var pa = a.getLatLng(), pb = b.getLatLng();
       var f = { type: 'Feature', properties: props, geometry: { type: 'LineString', coordinates: [[pa.lng, pa.lat], [pb.lng, pb.lat]] } };
+      f._derived = true;   // a straight line drawn from the fibre model: nothing to reshape
       L.geoJSON(f, geoOptions('fibre')).addTo(groups.fibre);
       return true;
     },
@@ -568,7 +570,11 @@
             var p = f.properties || {};
             if (p.id) featureById[p.id] = layer;
             if (layer.getLatLng) points.push({ p: p, latlng: layer.getLatLng() });
-            layer.on('click', function (e) { L.DomEvent.stop(e); if (editing && pathEditable(layer)) { pathEdit(layer); return; } openFeatureWin(layer); });
+            layer.on('click', function (e) {
+              L.DomEvent.stop(e);
+              if (editing) { var pl = pathTarget(layer, e.latlng); if (pl) { pathEdit(pl); return; } }
+              openFeatureWin(layer);
+            });
             var gt = f.geometry && f.geometry.type;
             if ((gt === 'LineString' || gt === 'MultiLineString') && p.id) lineById[p.id] = layer;
           }
@@ -851,6 +857,20 @@
   function pathEditable(l) {
     var f = l.feature, ll = l.getLatLngs ? l.getLatLngs() : null;
     return !!(f && f.properties && f.properties.id && f.geometry && f.geometry.type === 'LineString' && ll && ll.length >= 2 && !Array.isArray(ll[0]));
+  }
+  // What a tap on a line edits: the line itself, or, for a cable drawn along its ducts, the duct nearest the tap.
+  function pathTarget(l, ll) {
+    var f = l.feature || {};
+    if (f._derived) return null;
+    if (!f._route) return pathEditable(l) ? l : null;
+    var p = map.latLngToLayerPoint(ll), best = null, bd = Infinity;
+    f._route.forEach(function (r) {
+      var d = featureById[r] || featureById[String(r).split('/')[0]];
+      if (!d || d.getLatLng || d instanceof L.Polygon || !pathEditable(d)) return;
+      var q = d.getLatLngs().map(function (x) { return map.latLngToLayerPoint(x); });
+      for (var i = 1; i < q.length; i++) { var dd = L.LineUtil.pointToSegmentDistance(p, q[i - 1], q[i]); if (dd < bd) { bd = dd; best = d; } }
+    });
+    return best;
   }
   function pathLen(a) { var m = 0; for (var i = 1; i < a.length; i++) m += L.latLng(a[i - 1]).distanceTo(L.latLng(a[i])); return Math.round(m * 10) / 10; }
   function pathCommit(id, pts) {
