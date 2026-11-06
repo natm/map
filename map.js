@@ -412,6 +412,25 @@
   }
 
 
+  // ---- Preview: hovering a menu or search row outlines that item on the map (amber), without moving the map ----
+  var pv = L.layerGroup().addTo(map);
+  function previewIds(ids) {
+    pv.clearLayers();
+    ids.forEach(function (id) {
+      var l = lineById[id] || featureById[id] || featureById[String(id).split('/')[0]];
+      if (!l) return;
+      if (l.getLatLng) {
+        var ll = l.getLatLng();
+        L.circleMarker(ll, { radius: 18, color: '#0f1a20', weight: 7, fill: false, interactive: false }).addTo(pv);
+        L.circleMarker(ll, { radius: 18, color: '#ffb300', weight: 4, fill: false, interactive: false }).addTo(pv);
+      } else if (l.feature) {
+        L.geoJSON(l.feature, { style: { color: '#0f1a20', weight: 12, opacity: 0.7 }, interactive: false, pointToLayer: function (f, ll) { return L.circleMarker(ll, { radius: 14 }); } }).addTo(pv);
+        L.geoJSON(l.feature, { style: { color: '#ffb300', weight: 6, opacity: 1 }, interactive: false, pointToLayer: function (f, ll) { return L.circleMarker(ll, { radius: 14 }); } }).addTo(pv);
+      }
+    });
+  }
+  function clearPreview() { pv.clearLayers(); }
+
   // API for fibre.js (splice and trace diagrams).
   window.SiteMap = {
     map: map,
@@ -813,6 +832,7 @@
   }
   function closeDd() {
     ddOpen = null; dd.classList.remove('open');
+    clearPreview(); pvRow = null;
     Array.prototype.forEach.call(bar.querySelectorAll('.tb-btn'), function (x) { if (x.getAttribute('data-tb') !== 'legend') x.classList.remove('on'); });
   }
   // The legend is its own docked panel (bottom left) that stays open while other menus and the map are used.
@@ -946,8 +966,8 @@
   }
   function listKeys(e) {
     var rows = visRows();
-    if (e.key === 'ArrowDown') { sSel = Math.min(rows.length - 1, sSel + 1); markSel(); e.preventDefault(); }
-    else if (e.key === 'ArrowUp') { sSel = Math.max(0, sSel - 1); markSel(); e.preventDefault(); }
+    if (e.key === 'ArrowDown') { sSel = Math.min(rows.length - 1, sSel + 1); markSel(); previewRow(visRows()[sSel] || null); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { sSel = Math.max(0, sSel - 1); markSel(); previewRow(visRows()[sSel] || null); e.preventDefault(); }
     else if (e.key === 'Enter') {
       var r = rows[sSel];
       if (r) { var t = r.matches('a, [data-fx]') ? r : r.querySelector('a, [data-fx]'); if (t) t.click(); e.target.blur(); }
@@ -959,4 +979,22 @@
   sbox.addEventListener('keydown', listKeys);
   // Choosing something in a list closes the drop-down (the trace, cable view or popup then opens).
   dd.addEventListener('click', function (e) { if (e.target.closest('.tb-item a, a.tb-item, .tb-item[data-fx]')) setTimeout(closeDd, 0); });
+  // Hovering (or arrow-keying to) a row outlines its item on the map: chambers and other features, duct routes,
+  // cables, the cables of a circuit, and an enclosure's splice point.
+  function rowIds(row) {
+    if (!row) return [];
+    var t = row.matches('[data-fx], a[href^="#feature="]') ? row : row.querySelector('[data-fx], a[href^="#feature="]');
+    if (!t) return [];
+    var href = t.getAttribute('href') || '', m = href.match(/^#feature=(.+)$/);
+    if (m) return [decodeURIComponent(m[1])];
+    var fx = t.getAttribute('data-fx');
+    if (fx === 'feature' || fx === 'cable' || fx === 'schem-cable') return [t.getAttribute('data-id')];
+    if (fx === 'splice') return [t.getAttribute('data-node')];
+    if (fx === 'trace' || fx === 'schem-circuit') return window.FibreCircuitCables ? window.FibreCircuitCables(t.getAttribute('data-circuit')) : [];
+    return [];
+  }
+  var pvRow = null;
+  function previewRow(row) { if (row === pvRow) return; pvRow = row; if (row) previewIds(rowIds(row)); else clearPreview(); }
+  dd.addEventListener('mouseover', function (e) { previewRow(e.target.closest('.tb-item')); });
+  dd.addEventListener('mouseleave', function () { previewRow(null); });
 })();

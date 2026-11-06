@@ -309,6 +309,7 @@
       (want > sets.length ? '<p class="fx-note">❓ ' + (want - sets.length) + ' more fibre' + (want - sets.length > 1 ? 's' : '') + ' not documented yet.</p>' : '');
   }
   window.FibreCircuitInfo = function (c) { return circuitInfo(c); };
+  window.FibreCircuitCables = function (cid) { return traces[cid] ? seqCables(traces[cid]) : []; };
   function showTrace(name, seq, cid) {
     var showRoutes = false;
     try { showRoutes = localStorage.getItem('fx-show-routes') === '1'; } catch (e) {}
