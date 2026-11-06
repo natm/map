@@ -186,13 +186,31 @@
     return '<div class="fx-end">' + (atStart ? 'Starts' : 'Ends') + ' at this device</div>';
   }
 
+  // The chambers and ducts a cable passes through, in the direction of travel (shown when 'Show chambers and ducts' is ticked).
+  function routeHtml(c, fromNode) {
+    var r = (c.route || []).slice();
+    if (r.length < 3) return '<div class="fx-route"><span class="fx-sub">' + (c.route ? 'Direct, no chambers or ducts.' : '❓ Route through chambers and ducts not recorded.') + '</span></div>';
+    if (fromNode && r[r.length - 1] === fromNode) r.reverse();
+    var steps = r.slice(1, -1).map(function (id) {
+      var inf = window.SiteMap.featureInfo(id) || {};
+      if (String(id).indexOf('/') > 0) {
+        return '<li class="duct">duct <a href="#" data-fx="feature" data-id="' + esc(String(id).split('/')[0]) + '">' + esc(id) + '</a>' +
+          (inf.od_mm ? ' <span class="fx-sub">' + esc(inf.od_mm) + ' mm ' + esc([inf.colour, inf.type].filter(Boolean).join(' ')) + '</span>' : '') + '</li>';
+      }
+      return '<li class="chamber"><a href="#" data-fx="feature" data-id="' + esc(id) + '">' + esc(id) + '</a>' + (inf.name && inf.name !== id ? ' <span class="fx-sub">' + esc(inf.name) + '</span>' : '') + '</li>';
+    });
+    return '<ol class="fx-route">' + steps.join('') + '</ol>';
+  }
+
   function traceHtml(seq) {
     var html = '', i = 0;
     while (i < seq.length) {
       if (seq[i].edge) {   // a cable between nodes
         var e = seq[i].edge, c = net.cables[e.cable];
+        var fromNode = i > 0 && seq[i - 1].key ? parseKey(seq[i - 1].key).node : null;
         html += '<div class="fx-cable"><div class="fx-line" style="border-color:' + fibreColour(c, e.fibre).hex + '"></div><div class="fx-clabel"><a href="#" data-fx="cable" data-id="' + esc(e.cable) + '"><b>' +
-          esc(e.cable) + '</b></a> fibre ' + e.fibre + ' ' + chip(e.cable, e.fibre) + '<br><span class="fx-sub">' + esc(c.name) + ', ' + c.fibres + 'F</span></div></div>';
+          esc(e.cable) + '</b></a> fibre ' + e.fibre + ' ' + chip(e.cable, e.fibre) + '<br><span class="fx-sub">' + esc(c.name) + ', ' + c.fibres + 'F</span>' +
+          routeHtml(c, fromNode) + '</div></div>';
         i++; continue;
       }
       var nid = parseKey(seq[i].key).node, node = net.nodes[nid] || { name: nid };
@@ -224,7 +242,16 @@
 
   function showTrace(name, seq) {
     window.SiteMap.closePopup();
-    openPanel(name, traceHtml(seq) + '<p class="fx-note">Cables on this path are highlighted on the map. Dashed joints are assumed, not checked on site.</p>');
+    var showRoutes = false;
+    try { showRoutes = localStorage.getItem('fx-show-routes') === '1'; } catch (e) {}
+    openPanel(name, '<label class="fx-toggle"><input type="checkbox" class="fx-routes-toggle"' + (showRoutes ? ' checked' : '') + '> Show chambers and ducts along each cable</label>' +
+      '<div class="fx-trace-wrap' + (showRoutes ? ' show-routes' : '') + '">' + traceHtml(seq) + '</div>' +
+      '<p class="fx-note">Cables on this path are highlighted on the map. Dashed joints are assumed, not checked on site.</p>');
+    var cb = body.querySelector('.fx-routes-toggle');
+    cb.addEventListener('change', function () {
+      body.querySelector('.fx-trace-wrap').classList.toggle('show-routes', cb.checked);
+      try { localStorage.setItem('fx-show-routes', cb.checked ? '1' : '0'); } catch (e) {}
+    });
     window.SiteMap.highlightIds(seqCables(seq), true);
   }
 

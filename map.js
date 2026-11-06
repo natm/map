@@ -317,6 +317,16 @@
     clearHighlight: clearHighlight,
     closePopup: function () { map.closePopup(); },
     hasFeature: function (id) { return !!featureById[id]; },
+    // Properties of a map item, or of one duct ('<route>/<n>') merged with its route's.
+    featureInfo: function (id) {
+      var l = featureById[id];
+      if (l) return l.feature.properties || {};
+      var r = featureById[String(id).split('/')[0]];
+      if (!r) return null;
+      var rp = r.feature.properties || {};
+      var du = (rp.ducts || []).filter(function (d) { return d.id === id; })[0];
+      return du ? L.extend({ route: rp }, du) : null;
+    },
     hasLine: function (id) { return !!lineById[id]; },
     openHash: function () { openFeatureFromHash(); },
     lineAccuracy: function (id) {

@@ -133,3 +133,11 @@ body {
 .acc-ok { background: #e8f5e9; border-color: #66bb6a; color: #1b5e20; }
 .acc-approx { background: #fff8e1; border-color: #ffb300; color: #6d4c00; }
 .acc-assumed { background: #fce4ec; border-color: #e040fb; color: #6a1b6a; font-weight: 600; }
+
+/* Trace: optional chamber/duct route under each cable */
+.fx-toggle { display: block; font-size: 12px; margin: 0 0 8px; cursor: pointer; }
+.fx-route { display: none; margin: 4px 0 0; padding-left: 18px; font-size: 12px; }
+.show-routes .fx-route { display: block; }
+.fx-route li { margin: 1px 0; }
+.fx-route li.duct { color: #6a1b6a; }
+.fx-route li.duct::marker, .fx-route li.chamber::marker { color: #999; }
