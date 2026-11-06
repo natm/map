@@ -17,6 +17,24 @@
         "type": "Point",
         "coordinates": [-5.067480, 51.938686]
       }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "POST",
+        "name": "Postbox",
+        "type": "postbox",
+        "photos": ["postbox-2026-11-06.jpg"],
+        "notes": "Dry-stone postbox plinth with a slate \"Post\" plaque and a blue hinged wooden lid, by the blue pedestrian gate at the drive, with a small metal box on its side (Nat, 2026-11-06).",
+        "source": "Nat on site with OS Maps Locate (phone GPS), 12:59 2026-11-06: SM 89267 31103. Phone GPS was unreliable nearby this day",
+        "method": "gps-phone",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 10
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.06714, 51.938433]
+      }
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "about": "Fibre network model for the site map: cables, enclosures (panels, devices) and what is joined to what inside each one. Splice and trace diagrams on natm.github.io/map are drawn from this file, and scripts/fibre-network.py writes the Mermaid path diagrams in fibre.md from it. Format: map/README.md#fibre-network. PUBLIC: no VLANs, switch ports or IP addresses.",
-  "updated": "2026-11-05",
+  "updated": "2026-11-06",
   "cables": {
     "F03": {
       "name": "Shed to the woods cabinet",
@@ -98,11 +98,11 @@
       "notes": "F03 leaves MH10 into the shed rack, where all 24 cores are spliced to LC connectors on a 1U patch panel (Nat, 2026-11-06). Port numbers, and the patching to F08 (from the barn) and F02 (to the snug), are not yet recorded."
     },
     "WOODS": {
-      "name": "Woods cabinet (1U splice tray enclosure)",
-      "where": "1U splice tray enclosure in a cabinet next to MH12 in the woods (\"pole in woods\" on the 2 The Cottage label)",
+      "name": "Woods cabinet",
+      "where": "Grey outdoor 19-inch cabinet on a concrete plinth next to MH12 and a pole in the woods, with a galvanised box beside it (\"pole in woods\" on the 2 The Cottage label). Photos 2026-11-06.",
       "documented": true,
-      "notes": "F04's 8 fibres are spliced in order to LC 1–8, and F03's 24 fibres in order to LC 36–59 (Nat, 2026-11-06). LC 9–35 not recorded. The patch leads linking F03 ports to F04's LC 1–8 are not yet recorded.",
-      "patching_documented": false,
+      "notes": "Nat on site, 2026-11-06: F04 fibres 5-8 are patched to F03 fibres 5-8 (LC 5-8 to LC 40-43). F03 fibre 3 (LC 38) carries a 1G BiDi circuit from here to the barn, into the media converter, which feeds the UniFi Flex switch. Media converter and Flex switch powered up. Port numbers are our own (F04 on LC 1-8, F03 on LC 36-59), not the numbers printed on the 48-port panel (Nat: ignore those). Not stated: what LC 1-4 (F04 fibres 1-4) are patched to, so the Ty Di rif circuit (F04 fibre 1) stops here.",
+      "patching_documented": true,
       "layout": {
         "left": [
           "F03"
@@ -114,7 +114,7 @@
       "panels": [
         {
           "id": "P",
-          "name": "1U splice tray enclosure, LC (at least 59 ports)",
+          "name": "1U LC patch panel (our numbering: F04 on 1-8, F03 on 36-59)",
           "ports": 59,
           "connector": "LC/UPC",
           "labels": {
@@ -135,8 +135,40 @@
           "a": "F03:1-24",
           "b": "P:36-59",
           "note": "F03 fibre n on LC 35+n (Nat, 2026-11-06)"
+        },
+        {
+          "kind": "patch",
+          "a": "P:5-8",
+          "b": "P:40-43",
+          "note": "F04 fibre n to F03 fibre n, for n = 5-8 (Nat on site, 2026-11-06)"
+        },
+        {
+          "kind": "patch",
+          "a": "P:38",
+          "b": "MC:sfp1",
+          "note": "F03 fibre 3 is the 1G BiDi circuit to the barn (Nat, 2026-11-06); that it lands on the media converter's SFP is assumed",
+          "assumed": true
         }
-      ]
+      ],
+      "devices": [
+        {
+          "id": "MC",
+          "name": "Media converter (SFP, 1G BiDi to the barn)",
+          "ports": [
+            "sfp1"
+          ],
+          "notes": "Grey media converter on the shelf; Ethernet to the Flex switch. Powered up 2026-11-06"
+        },
+        {
+          "id": "SW",
+          "name": "UniFi Switch Flex (SW Woods Flex)",
+          "ports": [
+            "eth"
+          ],
+          "notes": "On the shelf with a PoE injector; powered up 2026-11-06"
+        }
+      ],
+      "labels_note": "Panel labels seen in photos: \"LLWYN DEWI\", \"1 THE COTTAGE\", \"LLWYNGORRAS COTTAGE\" (2026-11-06)"
     },
     "C2-ENC": {
       "name": "2 The Cottage enclosure",
@@ -411,6 +443,13 @@
       "fibres": 1,
       "optics": "BiDi",
       "start": "C2-ENC/P:12"
+    },
+    {
+      "id": "woods",
+      "name": "Woods cabinet circuit to the barn (1G BiDi)",
+      "fibres": 1,
+      "optics": "BiDi",
+      "start": "WOODS/MC:sfp1"
     }
   ]
 }

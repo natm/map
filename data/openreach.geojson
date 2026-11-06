@@ -1,4 +1,64 @@
 {
   "type": "FeatureCollection",
-  "features": []
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ORP01",
+        "name": "Openreach pole by the track",
+        "type": "pole",
+        "owner": "openreach",
+        "photos": ["orp01-pole-2026-11-06.jpg"],
+        "notes": "Openreach telephone pole in the hedge beside the track, with a galvanised guard at its base, a joint and drop cables. A 54 mm grey duct runs from here to Openreach's chamber MH18 by the bridge (Nat, 2026-11-06).",
+        "source": "Nat on site with OS Maps Locate (phone GPS), 12:54 2026-11-06: SM 89367 31176. Phone GPS was unreliable nearby this day",
+        "method": "gps-phone",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 10
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.065734, 51.939127]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ORP01-MH18",
+        "name": "Openreach duct, pole ORP01 to chamber MH18",
+        "type": "underground",
+        "owner": "openreach",
+        "ducts": [{"id": "ORP01-MH18/1", "od_mm": 54, "colour": "grey"}],
+        "notes": "Openreach's 54 mm grey duct from the pole to their chamber by the bridge (Nat, 2026-11-06; that the chamber is MH18 is assumed). ⚠️ Drawn as a straight line: the real path is not known.",
+        "source": "Nat (2026-11-06): ends, size and colour; path not known",
+        "method": "assumed",
+        "surveyed": "2026-11-06"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.065734, 51.939127],
+          [-5.067004, 51.938521]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ORP02",
+        "name": "Openreach pole 17",
+        "type": "pole",
+        "owner": "openreach",
+        "photos": ["orp02-pole-17-2026-11-06.jpg"],
+        "notes": "Openreach telephone pole in the hedge, carrying overhead lines; number plate \"17\" under a blue band, and a yellow warning label (Nat, 2026-11-06).",
+        "source": "Nat on site with OS Maps Locate (phone GPS), 12:56 2026-11-06: SM 89305 31119. Phone GPS was unreliable nearby this day",
+        "method": "gps-phone",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 10
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.066607, 51.938598]
+      }
+    }
+  ]
 }

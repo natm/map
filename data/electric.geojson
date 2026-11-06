@@ -1,4 +1,24 @@
 {
   "type": "FeatureCollection",
-  "features": []
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "TX01",
+        "name": "Pole-mounted transformer (National Grid, formerly Western Power)",
+        "type": "supply_point",
+        "owner": "other",
+        "photos": ["tx01-garden-2026-11-06.jpg", "tx01-2026-11-06.jpg"],
+        "notes": "Distribution network operator's pole in the hedge beyond the garden wall, with a pole-mounted transformer, high-voltage overhead line on insulators, and a stay wire anchored in the garden lawn. Owner: National Grid Electricity Distribution (formerly Western Power Distribution) (Nat, 2026-11-06). Supply route from here to the house not recorded.",
+        "source": "Nat on site with OS Maps Locate (phone GPS), 13:02 2026-11-06: SM 89293 31098. Phone GPS was unreliable nearby this day",
+        "method": "gps-phone",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 10
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.066762, 51.938404]
+      }
+    }
+  ]
 }

@@ -107,6 +107,8 @@
         "name": "Junction",
         "type": "manhole",
         "owner": "llwynygorras",
+        "size_mm": "450x450",
+        "photos": ["mh06-2026-11-06.jpg"],
         "notes": "In the grass on the raised junction",
         "doc": "fibre.md#-manholes-and-chambers",
         "source": "Nat, placed in geojson.io",
@@ -126,16 +128,18 @@
         "name": "Front wall",
         "type": "manhole",
         "owner": "llwynygorras",
+        "size_mm": "300x300",
+        "photos": ["mh07-2026-11-06.jpg"],
         "notes": "By the front garden wall",
         "doc": "fibre.md#-manholes-and-chambers",
-        "source": "Nat, placed in geojson.io",
-        "method": "aerial-trace",
-        "surveyed": "2026-11-05",
-        "accuracy_m": 2
+        "source": "Nat on site with OS Maps Locate (phone GPS), 12:45 2026-11-06: SM 89283 31114; earlier placed in geojson.io",
+        "method": "gps-phone",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 5
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-5.066941, 51.938513]
+        "coordinates": [-5.066913, 51.93854]
       }
     },
     {
@@ -144,10 +148,11 @@
         "id": "MH08",
         "name": "Behind wall",
         "type": "manhole",
+        "photos": ["mh08-setting-2026-11-06.jpg", "mh08-2026-11-06.jpg"],
         "owner": "llwynygorras",
         "notes": "Behind the wall",
         "doc": "fibre.md#-manholes-and-chambers",
-        "source": "Nat, placed in geojson.io",
+        "source": "Nat, placed in geojson.io. A phone GPS fix on site (OS Locate, 12:47 2026-11-06, SM 89275 31138) was about 29 m off; Nat kept this position",
         "method": "aerial-trace",
         "surveyed": "2026-11-05",
         "accuracy_m": 2
@@ -163,17 +168,19 @@
         "id": "MH09",
         "name": "Greenhouse",
         "type": "manhole",
+        "photos": ["mh09-greenhouse-cabinet-2026-11-06.jpg"],
         "owner": "llwynygorras",
+        "size_mm": "300x300",
         "notes": "Outside the greenhouse",
         "doc": "fibre.md#-manholes-and-chambers",
-        "source": "Nat, placed in geojson.io",
-        "method": "aerial-trace",
-        "surveyed": "2026-11-05",
-        "accuracy_m": 2
+        "source": "Nat on site with OS Maps Locate (phone GPS), 12:48 2026-11-06: SM 89294 31123 (Nat chose this over the drawn spot, ~31 m NE); earlier placed in geojson.io",
+        "method": "gps-phone",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 5
       },
       "geometry": {
         "type": "Point",
-        "coordinates": [-5.066372, 51.938783]
+        "coordinates": [-5.066757, 51.938631]
       }
     },
     {
@@ -307,6 +314,89 @@
       "geometry": {
         "type": "Point",
         "coordinates": [-5.068001, 51.938458]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH17",
+        "name": "By the bridge",
+        "type": "manhole",
+        "owner": "llwynygorras",
+        "size_mm": "450x450",
+        "photos": ["mh17-2026-11-06.jpg"],
+        "notes": "In the grass by the bridge, next to the end of a dry-stone wall and the field gate (Nat, 2026-11-06). Ducts in and out not yet recorded.",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat on site with OS Maps Locate (phone GPS), 12:50 2026-11-06: SM 89275 31112",
+        "method": "gps-phone",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 5
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067033, 51.938521]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH18",
+        "name": "Openreach chamber by the bridge",
+        "type": "manhole",
+        "owner": "openreach",
+        "photos": ["mh18-openreach-2026-11-06.jpg"],
+        "notes": "Openreach chamber (concrete cover with a lifting key slot) at the foot of the curved dry-stone wall by the bridge, about 2 m from MH17, whose cover shows in the photo (Nat, 2026-11-06). Placed by description: the phone GPS fix (SM 89294 31120) was unreliable. Size not recorded.",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat on site, 2026-11-06; placed 2 m east of MH17 from the photo",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 5
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067004, 51.938521]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH19",
+        "name": "Pair by the drive (1)",
+        "type": "manhole",
+        "owner": "llwynygorras",
+        "size_mm": "450x450",
+        "photos": ["mh19-mh20-setting-2026-11-06.jpg", "mh19-mh20-2026-11-06.jpg"],
+        "notes": "One of a pair of new 450x450 chambers about 1.5 m apart in the grass beside the gravel drive, near the stone gate pillars (Nat, 2026-11-06). Owner assumed Llwynygorras. Ducts not recorded.",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat on site with OS Maps Locate (phone GPS), 12:58 2026-11-06: SM 89365 31175 (one fix for the pair). Phone GPS was unreliable nearby this day",
+        "method": "gps-phone",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 10
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.065765, 51.939122]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH20",
+        "name": "Pair by the drive (2)",
+        "type": "manhole",
+        "owner": "llwynygorras",
+        "size_mm": "450x450",
+        "photos": ["mh19-mh20-setting-2026-11-06.jpg", "mh19-mh20-2026-11-06.jpg"],
+        "notes": "The other of the pair, about 1.5 m from MH19 (offset by eye) (Nat, 2026-11-06). Owner assumed Llwynygorras. Ducts not recorded.",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat on site with OS Maps Locate (phone GPS), 12:58 2026-11-06: SM 89365 31175 (one fix for the pair). Phone GPS was unreliable nearby this day",
+        "method": "gps-phone",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 10
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.065745, 51.93911]
       }
     }
   ]

@@ -18,7 +18,7 @@
         "type": "LineString",
         "coordinates": [
           [-5.06714, 51.938378],
-          [-5.066941, 51.938513]
+          [-5.066913, 51.93854]
         ]
       }
     },
@@ -59,7 +59,7 @@
       "geometry": {
         "type": "LineString",
         "coordinates": [
-          [-5.066941, 51.938513],
+          [-5.066913, 51.93854],
           [-5.066631, 51.938726]
         ]
       }
@@ -81,7 +81,7 @@
         "type": "LineString",
         "coordinates": [
           [-5.066631, 51.938726],
-          [-5.066372, 51.938783]
+          [-5.066757, 51.938631]
         ]
       }
     },
@@ -365,13 +365,14 @@
       "type": "Feature",
       "properties": {
         "id": "WOODS",
-        "name": "Woods cabinet: 1U splice tray enclosure",
-        "type": "splice",
+        "name": "Woods cabinet: 1U LC panel, media converter, UniFi Flex",
+        "type": "patch_point",
         "enclosure": "cabinet",
         "cables": "F03, F04",
-        "notes": "Cabinet next to MH12 in the woods holding a 1U splice tray enclosure. F04 (8-fibre, to 2 The Cottage) arrives through duct MH13-MH12; all 8 fibres are spliced here, presumably to F03 (24-fibre, from the shed). Which fibres join is not yet recorded.",
-        "doc": "fibre.md#locations-patch-points",
-        "source": "Nat, placed in geojson.io",
+        "notes": "Grey outdoor 19-inch cabinet on a concrete plinth next to MH12, beside a pole. Inside: a 1U LC patch panel (F04 spliced to LC 1-8, F03 to LC 36-59, our numbering), a media converter, a UniFi Flex switch and a PoE injector on a shelf, and a power strip. F04 fibres 5-8 are patched to F03 fibres 5-8; F03 fibre 3 is a 1G BiDi circuit to the barn (Nat on site, 2026-11-06).",
+        "photos": ["woods-cabinet-setting-2026-11-06.jpg", "woods-cabinet-outside-2026-11-06.jpg", "woods-cabinet-inside-2026-11-06.jpg"],
+        "doc": "fibre.md#woods-cabinet",
+        "source": "Nat, placed in geojson.io; on site 2026-11-06",
         "method": "aerial-trace",
         "surveyed": "2026-11-06",
         "accuracy_m": 2
@@ -379,6 +380,89 @@
       "geometry": {
         "type": "Point",
         "coordinates": [-5.068354, 51.939018]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "DE01",
+        "name": "Duct end at the fence post (to MH17)",
+        "type": "duct_end",
+        "photos": ["de01-duct-end-2026-11-06.jpg"],
+        "notes": "Bare end of a 63 mm duct coming up at a fence post, running to MH17. A grey junction box on the post and a coil of black cable hang here (Nat, 2026-11-06).",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat on site with OS Maps Locate (phone GPS), 12:52 2026-11-06: SM 89306 31128. Phone GPS was unreliable nearby this day",
+        "method": "gps-phone",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 10
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.066588, 51.938675]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH17-DE01",
+        "name": "Duct route MH17 to DE01 (By the bridge to the duct end at the fence post)",
+        "type": "duct",
+        "ducts": [{"id": "MH17-DE01/1", "od_mm": 63}],
+        "notes": "Duct route from MH17 to a bare duct end at a fence post: 1 duct, 63 mm (Nat, 2026-11-06). Colour, type and contents not recorded. ⚠️ Drawn as a straight line: the real path is not known.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat (2026-11-06): ends and size; path not known",
+        "method": "assumed",
+        "surveyed": "2026-11-06"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.067033, 51.938521],
+          [-5.066588, 51.938675]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH17-MH18",
+        "name": "Duct route MH17 to MH18 (By the bridge to the Openreach chamber)",
+        "type": "duct",
+        "ducts": [{"id": "MH17-MH18/1", "od_mm": 54, "colour": "grey"}],
+        "notes": "Short 54 mm grey duct between our chamber MH17 and Openreach's chamber MH18, about 2 m apart (Nat, 2026-11-06). Owner and contents not recorded.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat on site, 2026-11-06",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 5
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.067033, 51.938521],
+          [-5.067004, 51.938521]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH06-POST",
+        "name": "Duct route MH06 to the postbox",
+        "type": "duct",
+        "ducts": [{"id": "MH06-POST/1", "od_mm": 63}],
+        "notes": "Duct route from MH06 (Junction) to the postbox by the gate: 1 duct, 63 mm (Nat, 2026-11-06). Colour, type and contents not recorded. ⚠️ Drawn as a straight line: the real path is not known.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat (2026-11-06): ends and size; path not known",
+        "method": "assumed",
+        "surveyed": "2026-11-06"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.06714, 51.938378],
+          [-5.06714, 51.938433]
+        ]
       }
     }
   ]
