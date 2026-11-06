@@ -205,8 +205,8 @@
         "id": "MH15-MH16",
         "name": "Duct route MH15 to MH16 (Cottage 2 to Llwyn Dewi)",
         "type": "duct",
-        "ducts": [{"id": "MH15-MH16/1", "od_mm": 63, "type": "twinwall", "colour": "black", "cables": ""}],
-        "notes": "Duct route between MH15 and MH16: 1 duct (63 mm black twinwall). Drawn straight between the two chambers; the real line may curve. Cables in it not yet recorded.",
+        "ducts": [{"id": "MH15-MH16/1", "od_mm": 63, "type": "twinwall", "colour": "black", "cables": "F07"}],
+        "notes": "Duct route between MH15 and MH16: 1 duct (63 mm black twinwall). Drawn straight between the two chambers; the real line may curve. Carries F07 (Nat, 2026-11-06).",
         "doc": "fibre.md#-ducts",
         "source": "Nat (2026-11-06): which chambers are joined, size and type",
         "method": "description",
@@ -264,6 +264,29 @@
           [-5.067958, 51.938358],
           [-5.067575, 51.938148],
           [-5.067575, 51.938136]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "F07",
+        "name": "F07: 2 The Cottage to Llwyn Dewi",
+        "type": "cable",
+        "notes": "1-fibre single-mode drop (black). From the 2 The Cottage enclosure into MH15, along duct MH15-MH16/1, out of MH16 into Llwyn Dewi's wall box. Route follows the chambers and duct; exact line not surveyed.",
+        "source": "Nat (2026-11-06): F07 is in duct MH15-MH16",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 3,
+        "doc": "fibre.md#f07-2-the-cottage--llwyn-dewi-1f-single-mode"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.067976, 51.938353],
+          [-5.067982, 51.938352],
+          [-5.068001, 51.938458],
+          [-5.067982, 51.938461]
         ]
       }
     },
