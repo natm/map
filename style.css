@@ -319,3 +319,6 @@ body.editing .leaflet-container { cursor: crosshair; }
 body.editing .leaflet-marker-icon { cursor: move; }
 .tb-btn[data-tb="edit"].on { background: #e91e63; color: #fff; }
 .edit-json { width: 100%; box-sizing: border-box; height: 140px; margin-top: 8px; background: #111a22; color: #cfd8dc; border: 1px solid var(--line); border-radius: 6px; font: 11px ui-monospace, Menlo, monospace; }
+/* Edit is a tool, not a menu: dimmer until it's on (Nat, 2026-11-06) */
+.tb-btn[data-tb="edit"]:not(.on) { background: transparent; color: #90a4ae; border: 1px solid var(--line); }
+.tb-btn[data-tb="edit"]:not(.on):hover { color: var(--ink); border-color: #90a4ae; filter: none; }
