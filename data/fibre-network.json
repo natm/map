@@ -31,7 +31,15 @@
       "name": "2 The Cottage to Llwyn Dewi",
       "fibres": 1,
       "a": "C2-ENC",
-      "b": "LD"
+      "b": "LD",
+      "route": [
+        "C2-ENC",
+        "MH15",
+        "MH15-MH16/1",
+        "MH16",
+        "LD"
+      ],
+      "route_source": "Nat, 2026-11-06"
     },
     "F09": {
       "name": "Barn rack to the barn manhole closure",

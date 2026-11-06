@@ -202,7 +202,10 @@
       if (v === null || v === undefined) v = '';
       if (k === 'ducts' && Array.isArray(v)) {
         var dl = v.map(function (du, i) {
-          return '<b>' + esc(du.id || (i + 1)) + '</b>: ' + esc(du.od_mm) + ' mm ' + esc([du.colour, du.type].filter(Boolean).join(' ')) + (du.cables ? ' · cables: ' + esc(du.cables) : ' · no cables recorded');
+          return '<b>' + esc(du.id || (i + 1)) + '</b>: ' + esc(du.od_mm) + ' mm ' + esc([du.colour, du.type].filter(Boolean).join(' ')) + (function () {
+            var cs = du.cables || (window.FibreNet && window.FibreNet.cablesInDuct ? window.FibreNet.cablesInDuct(du.id) : '');
+            return cs ? ' · cables: ' + esc(cs) : ' · no cables recorded';
+          })();
         }).join('<br>');
         return '<tr><th>ducts</th><td><b>' + v.length + (v.length === 1 ? ' duct' : ' ducts') + '</b><br>' + dl + '</td></tr>';
       }
@@ -321,6 +324,38 @@
       return l ? accuracyBadge(l.feature.properties || {}, true) : '<div class="acc acc-assumed">⚠️ Not on the map yet: the route needs drawing or surveying.</div>';
     },
     // Draw an assumed straight line for a cable whose two ends are on the map but whose route isn't drawn.
+    // Build a cable's line from its route: points (chambers, boxes) and duct IDs ('<route>/<n>'), in order.
+    addRouteLine: function (id, route, props) {
+      if (lineById[id]) return false;
+      var pts = [];
+      function last() { return pts.length ? pts[pts.length - 1] : null; }
+      function push(ll) { var l = last(); if (!l || l.distanceTo(ll) > 0.3) pts.push(ll); }
+      for (var i = 0; i < route.length; i++) {
+        var r = route[i], rid = String(r).split('/')[0];
+        var f = featureById[r] || featureById[rid];
+        if (!f) return false;
+        if (f.getLatLng) { push(f.getLatLng()); continue; }
+        if (f instanceof L.Polygon) {
+          // A building or structure: enter at the point of its outline nearest the previous step
+          // (or nearest the next step if the route starts here).
+          var ring = f.getLatLngs(); while (Array.isArray(ring[0])) ring = ring[0];
+          var ref = last(), nxt = route[i + 1] && (featureById[route[i + 1]] || featureById[String(route[i + 1]).split('/')[0]]);
+          if (!ref && nxt) ref = nxt.getLatLng ? nxt.getLatLng() : nxt.getBounds().getCenter();
+          var best = ring[0];
+          if (ref) ring.forEach(function (q) { if (q.distanceTo(ref) < best.distanceTo(ref)) best = q; });
+          push(best); continue;
+        }
+        var ll = f.getLatLngs();
+        if (ll.length && Array.isArray(ll[0])) ll = [].concat.apply([], ll);
+        var l = last();
+        if (l && ll.length && l.distanceTo(ll[ll.length - 1]) < l.distanceTo(ll[0])) ll = ll.slice().reverse();
+        ll.forEach(push);
+      }
+      if (pts.length < 2) return false;
+      var f2 = { type: 'Feature', properties: props, geometry: { type: 'LineString', coordinates: pts.map(function (p) { return [p.lng, p.lat]; }) } };
+      L.geoJSON(f2, geoOptions('fibre')).addTo(groups.fibre);
+      return true;
+    },
     addAssumedLine: function (id, fromId, toId, props) {
       var a = featureById[fromId], b = featureById[toId];
       if (!a || !b || !a.getLatLng || !b.getLatLng || lineById[id]) return false;

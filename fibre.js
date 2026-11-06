@@ -444,6 +444,11 @@
       var c = net.cables[id];
       if (window.SiteMap.hasLine(id)) return;
       var an = (net.nodes[c.a] || {}).name || c.a, bn = (net.nodes[c.b] || {}).name || c.b;
+      if (c.route && window.SiteMap.addRouteLine(id, c.route, {
+        id: id, name: id + ': ' + c.name, type: 'cable',
+        notes: c.fibres + '-fibre cable from ' + an + ' to ' + bn + '. Route: ' + c.route.join(' → ') + '. Drawn through its chambers and ducts; the exact line between them is not surveyed.',
+        source: 'Route from the fibre model' + (c.route_source ? ' (' + c.route_source + ')' : ''), method: 'description', accuracy_m: 3
+      })) return;
       window.SiteMap.addAssumedLine(id, c.a, c.b, {
         id: id, name: id + ': ' + c.name, type: 'cable',
         notes: c.fibres + '-fibre cable from ' + an + ' to ' + bn + '. ⚠️ Drawn as a straight line between its two ends: the real route is not known and needs surveying.',
@@ -456,6 +461,10 @@
   // ---- Hooks for map.js popups ----
   window.FibreNet = {
     mapReady: function () { mapIsReady = true; drawAssumed(); },
+    cablesInDuct: function (ductId) {
+      if (!net) return '';
+      return Object.keys(net.cables).filter(function (id) { return (net.cables[id].route || []).indexOf(ductId) >= 0; }).join(', ');
+    },
     isOpen: function () { return !!(panel && panel.classList.contains('open')); },
     cableOpened: function (id) {
       if (!net || !net.cables[id]) return;
