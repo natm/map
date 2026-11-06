@@ -9,6 +9,16 @@
   var DOC_BASE = 'https://github.com/natm/llwyngorras-home/blob/main/';
 
   var map = L.map('map', { center: CENTRE, zoom: 19, maxZoom: 24, zoomControl: true });
+  // Remember where the map was (centre and zoom) in this browser, so a reload comes back to the same view.
+  // A #feature= / #splice= / #trace= link still moves the map to what it points at.
+  try {
+    var savedView = JSON.parse(localStorage.getItem('map-view') || 'null');
+    if (savedView && isFinite(savedView.lat) && isFinite(savedView.lng) && isFinite(savedView.z)) map.setView([savedView.lat, savedView.lng], savedView.z);
+  } catch (e) {}
+  map.on('moveend', function () {
+    var c = map.getCenter();
+    try { localStorage.setItem('map-view', JSON.stringify({ lat: +c.lat.toFixed(6), lng: +c.lng.toFixed(6), z: map.getZoom() })); } catch (e) {}
+  });
 
   // ---- Base layers ----
   var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
