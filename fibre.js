@@ -331,8 +331,12 @@
       // Header: cable ID, size and where its other end goes
       var on = (net.nodes[other] || {}).name || other;
       if (on.length > 18) on = on.slice(0, 17) + '…';
-      out.push(svgText(side === 'L' ? x : x + TW, y + 14, id + ' · ' + c.fibres + 'F → ' + on,
-        { anchor: side === 'L' ? 'start' : 'end', bold: true, size: 10 }));
+      // The far end is a link: its splice diagram if documented, otherwise its place on the map.
+      var od = (net.nodes[other] || {}).documented, onMap = window.SiteMap.hasFeature(other);
+      var act = od ? 'data-fx="splice" data-node="' + esc(other) + '"' : onMap ? 'data-fx="feature" data-id="' + esc(other) + '"' : '';
+      var anc = side === 'L' ? 'start' : 'end', tx = side === 'L' ? x : x + TW;
+      out.push('<text x="' + tx + '" y="' + (y + 14) + '" text-anchor="' + anc + '" font-size="10" font-weight="bold" fill="#222">' + esc(id + ' · ' + c.fibres + 'F → ') +
+        (act ? '<tspan class="fx-svglink" ' + act + '>' + esc(on) + (od ? ' 🔀' : ' 📍') + '</tspan>' : '<tspan>' + esc(on) + '</tspan>') + '</text>');
       // Sheath: one rounded block per tube, in the tube colour (grey for a single-tube cable)
       var sx = side === 'L' ? x : x + TW - 22;
       for (var t = 0; t * ts < c.fibres; t++) {
@@ -512,6 +516,21 @@
       html = '<div class="fx-scroll">' + spliceSvg(nid) + '</div>' +
         '<p class="fx-note">Scroll sideways on a phone. Use a trace below to follow one link end to end.</p>';
     }
+    // Jump buttons: this enclosure on the map, and the splice diagrams at the other end of each cable.
+    var others = [];
+    Object.keys(net.cables).forEach(function (id) {
+      var c = net.cables[id];
+      if (c.a === nid && others.indexOf(c.b) < 0) others.push(c.b);
+      if (c.b === nid && others.indexOf(c.a) < 0) others.push(c.a);
+    });
+    var jump = (window.SiteMap.hasFeature(nid) ? '<button class="fx-btn small" data-fx="feature" data-id="' + esc(nid) + '">📍 Details and photos</button>' : '') +
+      others.map(function (o) {
+        var on2 = net.nodes[o] || {}, nm = on2.name || o;
+        if (on2.documented) return '<button class="fx-btn small" data-fx="splice" data-node="' + esc(o) + '">🔀 ' + esc(nm) + '</button>';
+        if (window.SiteMap.hasFeature(o)) return '<button class="fx-btn small" data-fx="feature" data-id="' + esc(o) + '">📍 ' + esc(nm) + ' (not documented)</button>';
+        return '<span class="fx-sub">' + esc(nm) + ' (not documented)</span>';
+      }).join('');
+    html = '<div class="fx-btns" style="margin:0 0 8px">' + jump + '</div>' + html;
     var cs = circuitsAt(nid);
     if (cs.length) html += '<div class="fx-btns"><div class="fx-sub">Trace a link through here:</div>' + traceButtons(cs) + '</div>';
     openPanel('Splices: ' + (node.name || nid), html);
