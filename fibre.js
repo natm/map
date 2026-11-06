@@ -502,6 +502,19 @@
     popupExtras: function (p) {
       if (!net || !p || !p.id) return '';
       var html = '';
+      // Chambers and structures: the cables routed through them, and the ducts in and out.
+      var through = Object.keys(net.cables).filter(function (id) { return (net.cables[id].route || []).indexOf(p.id) >= 0; });
+      var dr = p.type === 'duct' ? [] : window.SiteMap.ductRoutesAt(p.id);
+      if (through.length || dr.length) {
+        var rows = through.map(function (id) {
+          var r = net.cables[id].route, i = r.indexOf(p.id);
+          var prev = i > 0 ? r[i - 1] : null, next = i < r.length - 1 ? r[i + 1] : null;
+          var how = i === 0 || i === r.length - 1 ? 'ends here' : 'from ' + esc(prev) + ' to ' + esc(next);
+          return '<li><a href="#" data-fx="cable" data-id="' + esc(id) + '"><b>' + esc(id) + '</b></a> <span class="fx-sub">' + net.cables[id].fibres + 'F · ' + how + '</span></li>';
+        }).join('');
+        html += '<div class="also"><div class="also-h">Cables through here</div>' + (rows ? '<ul class="fx-through">' + rows + '</ul>' : '<div class="fx-sub">None recorded</div>') +
+          (dr.length ? '<div class="fx-sub" style="margin:2px 0 0">Ducts: ' + dr.map(function (k) { return '<a href="#feature=' + esc(k) + '">' + esc(k) + '</a>'; }).join(', ') + '</div>' : '') + '</div>';
+      }
       if (net.nodes[p.id]) {
         html += '<button class="fx-btn" data-fx="splice" data-node="' + esc(p.id) + '">🔀 Splice diagram</button>';
         html += traceButtons(circuitsAt(p.id));

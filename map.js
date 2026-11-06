@@ -317,6 +317,13 @@
     clearHighlight: clearHighlight,
     closePopup: function () { map.closePopup(); },
     hasFeature: function (id) { return !!featureById[id]; },
+    // Duct routes (IDs '<end>-<end>') that start or finish at this chamber or structure.
+    ductRoutesAt: function (id) {
+      return Object.keys(featureById).filter(function (k) {
+        var p = featureById[k].feature.properties || {};
+        return p.type === 'duct' && k.split('-').indexOf(id) >= 0;
+      });
+    },
     // Properties of a map item, or of one duct ('<route>/<n>') merged with its route's.
     featureInfo: function (id) {
       var l = featureById[id];

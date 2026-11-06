@@ -141,3 +141,5 @@ body {
 .fx-route li { margin: 1px 0; }
 .fx-route li.duct { color: #6a1b6a; }
 .fx-route li.duct::marker, .fx-route li.chamber::marker { color: #999; }
+.fx-through { margin: 2px 0; padding-left: 16px; font-size: 12px; }
+.fx-through a { color: #0b5cad; text-decoration: none; }
