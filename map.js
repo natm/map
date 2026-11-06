@@ -8,7 +8,7 @@
   var CENTRE = [51.938686, -5.067480];
   var DOC_BASE = 'https://github.com/natm/llwyngorras-home/blob/main/';
 
-  var map = L.map('map', { center: CENTRE, zoom: 17, maxZoom: 21, zoomControl: true });
+  var map = L.map('map', { center: CENTRE, zoom: 19, maxZoom: 21, zoomControl: true });
 
   // ---- Base layers ----
   var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
