@@ -568,7 +568,7 @@
             var p = f.properties || {};
             if (p.id) featureById[p.id] = layer;
             if (layer.getLatLng) points.push({ p: p, latlng: layer.getLatLng() });
-            layer.on('click', function (e) { L.DomEvent.stop(e); openFeatureWin(layer); });
+            layer.on('click', function (e) { L.DomEvent.stop(e); if (editing && pathEditable(layer)) { pathEdit(layer); return; } openFeatureWin(layer); });
             var gt = f.geometry && f.geometry.type;
             if ((gt === 'LineString' || gt === 'MultiLineString') && p.id) lineById[p.id] = layer;
           }
@@ -839,9 +839,66 @@
   // ---- Edit mode (Nat, 2026-11-06): drag point items to new positions, or tap the map to drop a new point, then copy
   // the list and paste it into Claude, who updates the data files. Nothing is saved to the site itself; the list
   // is kept in this browser until cleared.
-  var editing = false, edits = {}, newPts = [], newLayer = L.layerGroup();
-  try { var sv = JSON.parse(localStorage.getItem('map-edits') || '{}'); edits = sv.edits || {}; newPts = sv.newPts || []; } catch (e) {}
-  function saveEdits() { try { localStorage.setItem('map-edits', JSON.stringify({ edits: edits, newPts: newPts })); } catch (e) {} }
+  var editing = false, edits = {}, newPts = [], paths = {}, newLayer = L.layerGroup();
+  try { var sv = JSON.parse(localStorage.getItem('map-edits') || '{}'); edits = sv.edits || {}; newPts = sv.newPts || []; paths = sv.paths || {}; } catch (e) {}
+  function saveEdits() { try { localStorage.setItem('map-edits', JSON.stringify({ edits: edits, newPts: newPts, paths: paths })); } catch (e) {} }
+
+  // ---- Path editing (Nat, 2026-11-06): tap a duct route (or other line) in edit mode to reshape it. Its two ends stay
+  // fixed (they belong to the chambers); drag a white dot to move a bend, tap one to remove it, and drag or tap a
+  // "+" between dots to add a bend there. Tap empty map to finish with that line.
+  var pathLayer = L.layerGroup(), pathSel = null;
+  function llArr(pts) { return pts.map(function (p) { return [p.lat, p.lng]; }); }
+  function pathEditable(l) {
+    var f = l.feature, ll = l.getLatLngs ? l.getLatLngs() : null;
+    return !!(f && f.properties && f.properties.id && f.geometry && f.geometry.type === 'LineString' && ll && ll.length >= 2 && !Array.isArray(ll[0]));
+  }
+  function pathLen(a) { var m = 0; for (var i = 1; i < a.length; i++) m += L.latLng(a[i - 1]).distanceTo(L.latLng(a[i])); return Math.round(m * 10) / 10; }
+  function pathCommit(id, pts) {
+    var l = featureById[id] || lineById[id];
+    if (!paths[id]) paths[id] = { old: l._pathOrig || llArr(pts) };
+    paths[id].new = llArr(pts);
+    if (JSON.stringify(paths[id].new) === JSON.stringify(paths[id].old)) delete paths[id];
+    saveEdits(); renderEdit();
+  }
+  function pathEdit(l) {
+    if (!l._pathOrig) l._pathOrig = paths[l.feature.properties.id] ? paths[l.feature.properties.id].old : llArr(l.getLatLngs());
+    pathSel = l; drawHandles(); renderEdit();
+  }
+  function pathDone() { pathSel = null; pathLayer.clearLayers(); renderEdit(); }
+  function drawHandles() {
+    pathLayer.clearLayers();
+    if (!pathSel) return;
+    var l = pathSel, id = l.feature.properties.id;
+    var pts = l.getLatLngs().map(function (p) { return L.latLng(p.lat, p.lng); });
+    function redraw() { l.setLatLngs(pts.slice()); casing.setLatLngs(pts.slice()); }
+    var casing = L.polyline(pts.slice(), { color: '#e91e63', weight: 10, opacity: 0.35, interactive: false }).addTo(pathLayer);
+    pts.forEach(function (p, i) {
+      var end = i === 0 || i === pts.length - 1;
+      var m = L.marker(p, { draggable: !end, zIndexOffset: 2000, icon: L.divIcon({ className: end ? 'pe-end' : 'pe-vtx', iconSize: end ? [12, 12] : [16, 16] }) }).addTo(pathLayer);
+      if (end) { m.bindTooltip('Fixed end: it moves with its chamber', { direction: 'top' }); return; }
+      m.bindTooltip('Drag to move this bend · tap to remove it', { direction: 'top' });
+      m.on('drag', function () { pts[i] = m.getLatLng(); redraw(); });
+      m.on('dragend', function () { pathCommit(id, pts); drawHandles(); });
+      m.on('click', function (e) { L.DomEvent.stop(e); pts.splice(i, 1); redraw(); pathCommit(id, pts); drawHandles(); });
+    });
+    for (var i = 0; i < pts.length - 1; i++) (function (i) {
+      var a = pts[i], b = pts[i + 1], mid = L.latLng((a.lat + b.lat) / 2, (a.lng + b.lng) / 2), added = false;
+      var m = L.marker(mid, { draggable: true, zIndexOffset: 1500, icon: L.divIcon({ className: 'pe-mid', html: '+', iconSize: [16, 16] }) }).addTo(pathLayer);
+      m.bindTooltip('Drag (or tap) to add a bend here', { direction: 'top' });
+      m.on('dragstart', function () { pts.splice(i + 1, 0, m.getLatLng()); added = true; });
+      m.on('drag', function () { if (added) { pts[i + 1] = m.getLatLng(); redraw(); } });
+      m.on('dragend', function () { pathCommit(id, pts); drawHandles(); });
+      m.on('click', function (e) { L.DomEvent.stop(e); pts.splice(i + 1, 0, mid); redraw(); pathCommit(id, pts); drawHandles(); });
+    })(i);
+  }
+  function applyPaths(on) {
+    Object.keys(paths).forEach(function (id) {
+      var l = featureById[id] || lineById[id];
+      if (!l || !l.setLatLngs) return;
+      if (!l._pathOrig) l._pathOrig = paths[id].old;
+      l.setLatLngs(on ? paths[id].new : paths[id].old);
+    });
+  }
   function f6(x) { return (Math.round(x * 1e6) / 1e6).toFixed(6); }
   function copyText(t, el) {
     function done() { if (el) { el.classList.add('copied'); setTimeout(function () { el.classList.remove('copied'); }, 900); } }
@@ -857,7 +914,12 @@
         var e = edits[id], f = featureById[id], p = (f && f.feature && f.feature.properties) || {};
         return { id: id, name: p.name || '', old: [r6(e.lat0), r6(e.lng0)], new: [r6(e.lat), r6(e.lng)], moved_m: Math.round(L.latLng(e.lat, e.lng).distanceTo(L.latLng(e.lat0, e.lng0)) * 10) / 10 };
       }),
-      new: newPts.map(function (p, i) { return { name: p.name || ('point ' + (i + 1)), at: [r6(p.lat), r6(p.lng)] }; })
+      new: newPts.map(function (p, i) { return { name: p.name || ('point ' + (i + 1)), at: [r6(p.lat), r6(p.lng)] }; }),
+      paths: Object.keys(paths).sort().map(function (id) {
+        var e = paths[id], f = featureById[id] || lineById[id], p = (f && f.feature && f.feature.properties) || {};
+        var rr = function (a) { return a.map(function (q) { return [r6(q[0]), r6(q[1])]; }); };
+        return { id: id, name: p.name || '', old: rr(e.old), new: rr(e.new), length_m: [pathLen(e.old), pathLen(e.new)] };
+      })
     }, null, 1).replace(/\[\n\s*([-\d.]+),\n\s*([-\d.]+)\n\s*\]/g, '[$1, $2]');
   }
   function editLines() {
@@ -867,6 +929,7 @@
       out.push('MOVE ' + id + ' ' + f6(e.lat) + ', ' + f6(e.lng) + '  (was ' + f6(e.lat0) + ', ' + f6(e.lng0) + '; moved ' + d.toFixed(1) + ' m)');
     });
     newPts.forEach(function (p, i) { out.push('NEW ' + (p.name || ('point ' + (i + 1))) + ' ' + f6(p.lat) + ', ' + f6(p.lng)); });
+    Object.keys(paths).forEach(function (id) { out.push('PATH ' + id); });
     return out;
   }
   var ep = L.DomUtil.create('div', 'edit-panel', document.body);
@@ -874,16 +937,32 @@
   function renderEdit() {
     var lines = editLines();
     ep.innerHTML = '<div class="tb-dd-head">✏️ Edit mode<button class="tb-x" title="Leave edit mode">&times;</button></div><div class="tb-dd-body">' +
-      '<div class="tb-sub">Drag chambers, boxes, poles or other points to move them; tap empty map to drop a new point (name it below). When done, <b>Export</b> copies a JSON batch (ids, old and new positions) to paste into Claude. Kept in this browser until cleared.</div>' +
+      '<div class="tb-sub">Drag chambers, boxes, poles or other points to move them; tap empty map to drop a new point (name it below). <b>Tap a duct</b> to reshape its path: drag the dots, tap a dot to remove it, drag or tap a <b>+</b> to add a bend; its ends stay on the chambers. When done, <b>Export</b> copies a JSON batch to paste into Claude. Kept in this browser until cleared.</div>' +
+      (pathSel ? '<div class="edit-sel">〰️ Editing <b>' + esc(pathSel.feature.properties.id) + '</b> · ' + (pathSel.getLatLngs().length - 2) + ' bend(s) · ' + pathLen(llArr(pathSel.getLatLngs())) + ' m <button class="fx-btn small edit-done">Done</button></div>' : '') +
       (lines.length ? '<div class="edit-list">' + Object.keys(edits).sort().map(function (id) {
           var e = edits[id];
           return '<div class="edit-row"><code class="edit-copy" data-t="MOVE ' + esc(id) + ' ' + f6(e.lat) + ', ' + f6(e.lng) + '">MOVE <b>' + esc(id) + '</b> ' + f6(e.lat) + ', ' + f6(e.lng) + '</code><button class="edit-undo" data-id="' + esc(id) + '" title="Put it back">↺</button></div>';
         }).join('') + newPts.map(function (p, i) {
           return '<div class="edit-row"><input class="edit-name" data-i="' + i + '" value="' + esc(p.name || '') + '" placeholder="name (e.g. MH21)"><code class="edit-copy" data-t="NEW ' + esc(p.name || ('point ' + (i + 1))) + ' ' + f6(p.lat) + ', ' + f6(p.lng) + '">' + f6(p.lat) + ', ' + f6(p.lng) + '</code><button class="edit-del" data-i="' + i + '" title="Remove">✕</button></div>';
+        }).join('') + Object.keys(paths).sort().map(function (id) {
+          var e = paths[id];
+          return '<div class="edit-row"><code class="edit-copy edit-pick" data-id="' + esc(id) + '" data-t="PATH ' + esc(id) + '">PATH <b>' + esc(id) + '</b> ' + (e.new.length - 2) + ' bend(s), ' + pathLen(e.new) + ' m (was ' + pathLen(e.old) + ' m)</code><button class="edit-unpath" data-id="' + esc(id) + '" title="Put the path back">↺</button></div>';
         }).join('') + '</div>' : '<div class="tb-sub"><i>No changes yet.</i></div>') +
       '<div class="fx-btns"><button class="fx-btn edit-all"' + (lines.length ? '' : ' disabled') + '>📤 Export</button><button class="fx-btn edit-clear"' + (lines.length ? '' : ' disabled') + '>Clear</button></div></div>';
     ep.querySelector('.tb-x').onclick = function () { setEdit(false); };
-    Array.prototype.forEach.call(ep.querySelectorAll('.edit-copy'), function (c) { c.onclick = function () { copyText(c.getAttribute('data-t'), c); }; });
+    var dn = ep.querySelector('.edit-done'); if (dn) dn.onclick = pathDone;
+    Array.prototype.forEach.call(ep.querySelectorAll('.edit-unpath'), function (b) { b.onclick = function () {
+      var id = b.getAttribute('data-id'), l = featureById[id] || lineById[id];
+      if (l && l.setLatLngs) l.setLatLngs(paths[id].old);
+      delete paths[id]; saveEdits();
+      if (pathSel === l) drawHandles();
+      renderEdit();
+    }; });
+    Array.prototype.forEach.call(ep.querySelectorAll('.edit-copy'), function (c) { c.onclick = function () {
+      var pid = c.getAttribute('data-id'), pl = pid && (featureById[pid] || lineById[pid]);
+      if (pl && c.classList.contains('edit-pick')) { pathEdit(pl); map.fitBounds(pl.getBounds(), { maxZoom: 20, padding: [60, 60] }); return; }
+      copyText(c.getAttribute('data-t'), c);
+    }; });
     Array.prototype.forEach.call(ep.querySelectorAll('.edit-undo'), function (b) { b.onclick = function () {
       var id = b.getAttribute('data-id'), e = edits[id], l = featureById[id];
       if (l && l.setLatLng) l.setLatLng([e.lat0, e.lng0]);
@@ -901,7 +980,8 @@
     var clr = ep.querySelector('.edit-clear'); if (clr) clr.onclick = function () {
       if (!confirm('Clear all edits? Moved items go back.')) return;
       Object.keys(edits).forEach(function (id) { var l = featureById[id], e = edits[id]; if (l && l.setLatLng) l.setLatLng([e.lat0, e.lng0]); });
-      edits = {}; newPts = []; saveEdits(); drawNew(); renderEdit();
+      applyPaths(false); pathDone();
+      edits = {}; newPts = []; paths = {}; saveEdits(); drawNew(); renderEdit();
     };
   }
   function drawNew() {
@@ -912,7 +992,7 @@
       m.on('dragend', function () { var ll = m.getLatLng(); p.lat = ll.lat; p.lng = ll.lng; saveEdits(); renderEdit(); });
     });
   }
-  function onMapClick(e) { if (!editing) return; newPts.push({ lat: e.latlng.lat, lng: e.latlng.lng, name: '' }); saveEdits(); drawNew(); renderEdit(); }
+  function onMapClick(e) { if (!editing) return; if (pathSel) { pathDone(); return; } newPts.push({ lat: e.latlng.lat, lng: e.latlng.lng, name: '' }); saveEdits(); drawNew(); renderEdit(); }
   map.on('click', onMapClick);
   function setEdit(on) {
     editing = on;
@@ -932,7 +1012,8 @@
       } else l.dragging.disable();
       if (edits[id] && on) l.setLatLng([edits[id].lat, edits[id].lng]);
     });
-    if (on) { newLayer.addTo(map); drawNew(); renderEdit(); } else map.removeLayer(newLayer);
+    if (on) { newLayer.addTo(map); pathLayer.addTo(map); applyPaths(true); drawNew(); renderEdit(); }
+    else { pathDone(); map.removeLayer(newLayer); map.removeLayer(pathLayer); }
   }
   var leg = L.DomUtil.create('div', 'tb-legend-panel', document.body);
   L.DomEvent.disableClickPropagation(leg); L.DomEvent.disableScrollPropagation(leg);

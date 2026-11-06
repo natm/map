@@ -348,3 +348,12 @@ body.editing .leaflet-marker-icon { cursor: move; }
 .fx-cablink { pointer-events: auto; cursor: pointer; opacity: 0.85; }
 .fx-cablink:hover { opacity: 1; }
 .fx-cablink:hover .core { stroke: #ffe0b2; }
+
+/* Edit mode: reshaping a line's path */
+.pe-vtx { background: #fff; border: 3px solid #e91e63; border-radius: 50%; box-sizing: border-box; cursor: move; box-shadow: 0 0 0 2px rgba(0,0,0,.35); }
+.pe-end { background: #90a4ae; border: 2px solid #263238; border-radius: 2px; box-sizing: border-box; cursor: not-allowed; }
+.pe-mid { background: rgba(233,30,99,.85); color: #fff; border-radius: 50%; font: bold 13px/16px sans-serif; text-align: center; cursor: copy; opacity: .8; box-shadow: 0 0 0 2px rgba(0,0,0,.3); }
+.pe-mid:hover { opacity: 1; }
+.edit-sel { margin: 6px 0; padding: 5px 8px; border: 1px solid #e91e63; border-radius: 6px; font-size: 12.5px; display: flex; align-items: center; gap: 8px; }
+.edit-sel .fx-btn { margin: 0 0 0 auto; }
+body.editing .leaflet-interactive { cursor: pointer; }
