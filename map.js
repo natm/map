@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  var UPDATED = '2026-11-05';
+  var UPDATED = '2026-11-06';
   var CENTRE = [51.938686, -5.067480];
   var DOC_BASE = 'https://github.com/natm/llwyngorras-home/blob/main/';
 
