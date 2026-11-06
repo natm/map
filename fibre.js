@@ -176,9 +176,17 @@
     L.DomEvent.disableClickPropagation(panel);
     L.DomEvent.disableScrollPropagation(panel);
   }
+  // Window titles: plain text, or {icon, id, name} to show the object's ID in a pill before its name (Nat, 2026-11-06).
+  function setTitle(el, t) {
+    if (t && typeof t === 'object') {
+      var nm = String(t.name || '');
+      if (t.id && nm.indexOf(t.id + ': ') === 0) nm = nm.slice(t.id.length + 2);   // "F05: 2 The Cottage…" -> "2 The Cottage…"
+      el.innerHTML = (t.icon ? esc(t.icon) + ' ' : '') + (t.id ? '<span class="fx-id">' + esc(t.id) + '</span> ' : '') + esc(nm && nm !== t.id ? nm : '');
+    } else el.textContent = t;
+  }
   function openPanel(t, html) {
     ensurePanel();
-    title.textContent = t;
+    setTitle(title, t);
     body.innerHTML = html;
     body.scrollTop = 0; body.scrollLeft = 0;
     panel.classList.add('open');
@@ -726,7 +734,7 @@
     opt = opt || {};
     if (wins[id]) {
       var ow = wins[id];
-      if (opt.update) { ow.querySelector('.fx-win-title').textContent = title; ow.querySelector('.fx-win-body').innerHTML = html; }
+      if (opt.update) { setTitle(ow.querySelector('.fx-win-title'), title); ow.querySelector('.fx-win-body').innerHTML = html; }
       if (opt.render) ow._render = opt.render;
       frontWin(ow);
       ow.classList.remove('flash'); void ow.offsetWidth; ow.classList.add('flash');
@@ -736,7 +744,7 @@
     w.className = 'fx-win' + (opt.cls ? ' ' + opt.cls : '');
     if (opt.render) w._render = opt.render;
     w.innerHTML = '<div class="fx-win-head"><span class="fx-win-title"></span><button class="fx-close" title="Close">&times;</button></div><div class="fx-win-body"></div>';
-    w.querySelector('.fx-win-title').textContent = title;
+    setTitle(w.querySelector('.fx-win-title'), title);
     w.querySelector('.fx-win-body').innerHTML = html;
     // Place new windows side by side from the right, then cascade down.
     document.body.appendChild(w);
@@ -810,7 +818,7 @@
     html = '<div class="fx-btns" style="margin:0 0 8px">' + jump + '</div>' + html;
     var cs = circuitsAt(nid);
     if (cs.length) html += '<div class="fx-btns"><div class="fx-sub">Trace a circuit through here:</div>' + traceButtons(cs) + '</div>';
-    var sb = showView('splice:' + nid, ICON.splice + ' Splices: ' + (node.name || nid), html, { cls: 'big', update: false });
+    var sb = showView('splice:' + nid, { icon: ICON.splice, id: nid, name: 'Splices: ' + (node.name || nid) }, html, { cls: 'big', update: false });
     wirePatchHover(sb.parentNode);
     var ids = Object.keys(net.cables).filter(function (id) { return net.cables[id].a === nid || net.cables[id].b === nid; });
     window.SiteMap.highlightIds(ids, false);
@@ -903,7 +911,7 @@
     cableOpened: function (id) {
       if (!net || !net.cables[id]) return;
       var extra = window.SiteMap.lineDetails ? window.SiteMap.lineDetails(id) : '';
-      showView('cable:' + id, ICON.cable + ' Cable ' + id + ': ' + net.cables[id].name, cableHtml(id) + extra, { cls: 'big' });
+      showView('cable:' + id, { icon: ICON.cable, id: id, name: net.cables[id].name }, cableHtml(id) + extra, { cls: 'big' });
     },
     popupExtras: function (p) {
       if (!net || !p || !p.id) return '';
@@ -966,7 +974,7 @@
     if (b.getAttribute('data-fx') === 'schem-cable') {
       var sid = b.getAttribute('data-id'), sc0 = net.cables[sid];
       window.SiteMap.highlightIds([sid], true);
-      showView('schem-cable:' + sid, '📐 ' + sid + ' route: ' + sc0.name, '<p class="fx-sub">' + sc0.fibres + ' fibres</p>' + cableSchematic(sid) +
+      showView('schem-cable:' + sid, { icon: '📐', id: sid, name: 'Route: ' + sc0.name }, '<p class="fx-sub">' + sc0.fibres + ' fibres</p>' + cableSchematic(sid) +
         '<p class="fx-note">Rounded blue boxes are enclosures and buildings; square grey boxes are chambers. Thick grey lines are ducts, thin lines direct runs; dashed means the route isn\'t recorded. Tap anything to open it.</p>');
     }
     if (b.getAttribute('data-fx') === 'schem-circuit') {

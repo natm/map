@@ -292,7 +292,7 @@
     var ll = layer.getLatLng ? layer.getLatLng() : null;
     var tic = window.FibreIcons && p.id ? window.FibreIcons.iconFor(p.id) : '';
     var render = function () { return popupHtml(p, ll, isLine, true); };
-    window.FxWin.show('feature:' + (p.id || L.stamp(layer)), (tic ? tic + ' ' : '📍 ') + (p.name || p.id || 'Details'), render(), { render: render, cls: 'small' });
+    window.FxWin.show('feature:' + (p.id || L.stamp(layer)), { icon: tic || '📍', id: p.id || '', name: p.name || (p.id ? '' : 'Details') }, render(), { render: render, cls: 'small' });
   }
 
   // ---- #feature=<id>: open that item's popup (shareable links) ----
