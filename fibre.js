@@ -469,7 +469,7 @@
     var head = svgText(8, 18, node.name || nid, { bold: true, size: 12 });
     var legend = svgText(8, H - 10, 'Coloured lines: fusion splices (□ = splice, T = tray) · thick lines: express fibres, not cut · yellow loops: LC patch leads · dashed: assumed', { size: 10, fill: '#666' });
     return '<svg class="fx-svg" xmlns="http://www.w3.org/2000/svg" style="max-width:' + W + 'px" viewBox="0 0 ' + W + ' ' + H +
-      '" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">' + '<rect width="100%" height="100%" fill="#fff"/>' + head + lines.join('') + out.join('') + arcs.join('') + legend + '</svg>';
+      '" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">' + '<rect width="100%" height="100%" fill="#fff"/>' + head + '<g class="L-lines">' + lines.join('') + '</g><g class="L-boxes">' + out.join('') + '</g><g class="L-patches">' + arcs.join('') + '</g>' + legend + '</svg>';
   }
 
   function circuitsAt(nid) {
@@ -490,7 +490,9 @@
       Array.prototype.forEach.call(svg.querySelectorAll('.fxe'), function (g) {
         var on = c !== null && g.getAttribute('data-c') === c;
         g.classList.toggle('hl', on);
-        if (on && g.parentNode) g.parentNode.appendChild(g);   // draw the highlighted path on top
+        // Bring highlighted parts to the front of their own layer only (splice lines < fibres and ports < patch leads),
+        // so a port row can never be drawn over a patch lead.
+        if (on && g.parentNode && !g.classList.contains('row')) g.parentNode.appendChild(g);
       });
       svg.classList.toggle('has-hl', c !== null);
     }
