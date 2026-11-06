@@ -272,7 +272,7 @@
   }
 
   // ---- Splice diagram (SVG) ----
-  var RH = 16, HH = 22, GAP = 14;
+  var RH = 13, HH = 17, GAP = 8;   // compact: row height, header height, gap between blocks
 
   function svgText(x, y, s, opt) {
     opt = opt || {};
@@ -330,7 +330,7 @@
     }
     var panels = node.panels || [], devices = node.devices || [];
     var hasMid = panels.length || devices.length;
-    var TW = 120, MW = 250, LANE = 46, GX = 100;
+    var TW = 96, MW = 190, LANE = 32, GX = 64, NW = 22;
     var xL = 8, xM = xL + TW + GX, xR = hasMid ? xM + MW + GX : xL + TW + 200;
     if (!right.length) xR = xM + MW;
     var W = (right.length ? xR + TW : xM + (hasMid ? MW : 0)) + 8;
@@ -344,28 +344,28 @@
       var h = HH + c.fibres * RH;
       // Header: cable ID, size and where its other end goes
       var on = (net.nodes[other] || {}).name || other;
-      if (on.length > 18) on = on.slice(0, 17) + '…';
+      if (on.length > 15) on = on.slice(0, 14) + '…';
       // The far end is a link: its splice diagram if documented, otherwise its place on the map.
       var od = (net.nodes[other] || {}).documented, onMap = window.SiteMap.hasFeature(other);
       var act = od ? 'data-fx="splice" data-node="' + esc(other) + '"' : onMap ? 'data-fx="feature" data-id="' + esc(other) + '"' : '';
       var anc = side === 'L' ? 'start' : 'end', tx = side === 'L' ? x : x + TW;
-      out.push('<text x="' + tx + '" y="' + (y + 14) + '" text-anchor="' + anc + '" font-size="10" font-weight="bold" fill="#222">' + esc(id + ' · ' + c.fibres + 'F → ') +
+      out.push('<text x="' + tx + '" y="' + (y + 12) + '" text-anchor="' + anc + '" font-size="9" font-weight="bold" fill="#222">' + esc(id + ' · ' + c.fibres + 'F → ') +
         (act ? '<tspan class="fx-svglink" ' + act + '>' + esc(on) + (od ? ' 🔀' : ' 📍') + '</tspan>' : '<tspan>' + esc(on) + '</tspan>') + '</text>');
       // Sheath: one rounded block per tube, in the tube colour (grey for a single-tube cable)
-      var sx = side === 'L' ? x : x + TW - 22;
+      var sx = side === 'L' ? x : x + TW - 16;
       for (var t = 0; t * ts < c.fibres; t++) {
         var n0 = t * ts, n1 = Math.min(c.fibres, n0 + ts);
         var tc = c.fibres > ts ? COLOURS[t % 12][1] : '#b0bec5';
-        out.push('<rect x="' + sx + '" y="' + (y + HH + n0 * RH - 2) + '" width="22" height="' + ((n1 - n0) * RH + 4) + '" rx="8" fill="' + tc + '" stroke="#455a64"/>');
+        out.push('<rect x="' + sx + '" y="' + (y + HH + n0 * RH - 2) + '" width="16" height="' + ((n1 - n0) * RH + 4) + '" rx="6" fill="' + tc + '" stroke="#455a64"/>');
       }
       // Fibre pills
-      var px = side === 'L' ? x + 24 : x, pw = TW - 24;
+      var px = side === 'L' ? x + 18 : x, pw = TW - 18;
       for (var i = 1; i <= c.fibres; i++) {
         var fc = fibreColour(c, i), ry = y + HH + (i - 1) * RH;
         var k = key(nid, 'C', id, i), isUsed = !!u[k];
         out.push('<g class="fxe" data-c="' + cOf(k) + '"><rect class="pill" x="' + px + '" y="' + (ry + 1) + '" width="' + pw + '" height="' + (RH - 2) + '" rx="4" fill="' + fc.hex + '" stroke="#333" stroke-width="0.6"' +
           (isUsed ? '' : ' fill-opacity="0.35"') + '/>' +
-          svgText(px + pw / 2, ry + 12, i + '  ' + fc.name + (isUsed ? '' : ' (spare)'), { anchor: 'middle', fill: LIGHT[fc.name] || !isUsed ? '#222' : '#fff', size: 10 }) + '</g>');
+          svgText(px + pw / 2, ry + 10, i + ' ' + fc.name + (isUsed ? '' : ' (spare)'), { anchor: 'middle', fill: LIGHT[fc.name] || !isUsed ? '#222' : '#fff', size: 9 }) + '</g>');
         anchor[k] = { x: side === 'L' ? x + TW : x, y: ry + RH / 2, side: side };
       }
       return h;
@@ -375,21 +375,21 @@
       var h = HH + rows.length * RH;
       out.push('<rect x="' + x + '" y="' + y + '" width="' + MW + '" height="' + h + '" fill="#fff" stroke="#555"/>');
       out.push('<rect x="' + x + '" y="' + y + '" width="' + MW + '" height="' + HH + '" fill="' + (kindKey === 'D' ? '#e8eaf6' : '#eceff1') + '" stroke="#555"/>');
-      out.push(svgText(x + MW / 2, y + 15, label.length > 44 ? label.slice(0, 42) + '…' : label, { anchor: 'middle', bold: true, size: 10 }));
+      out.push(svgText(x + MW / 2, y + 12, label.length > 38 ? label.slice(0, 36) + '…' : label, { anchor: 'middle', bold: true, size: 9 }));
       rows.forEach(function (r, i) {
         var ry = y + HH + i * RH;
         if (r.gap) {
           out.push('<rect x="' + x + '" y="' + ry + '" width="' + MW + '" height="' + RH + '" fill="#f3f3f3" stroke="#ccc" stroke-width="0.5"/>' +
-            svgText(x + 13, ry + 12, '⋮', { anchor: 'middle', size: 11, fill: '#888' }) + svgText(x + 26 + 6, ry + 12, r.text.replace(/^⋮\s*/, ''), { size: 10, fill: '#888' }));
+            svgText(x + NW / 2, ry + 10, '⋮', { anchor: 'middle', size: 10, fill: '#888' }) + svgText(x + NW + 5, ry + 10, r.text.replace(/^⋮\s*/, ''), { size: 9, fill: '#888' }));
           return;
         }
         // [socket n][port description ........][patch lane]: splices arrive on the left edge, patch leads loop on the right.
         out.push('<g class="fxe row" data-c="' + cOf(r.keyRear || r.keyFront) + '">' +
-          '<rect class="rowbg" x="' + (x + 26) + '" y="' + ry + '" width="' + (MW - 26 - LANE) + '" height="' + RH + '" fill="#fff"/>' +
-          '<rect class="sock" x="' + x + '" y="' + ry + '" width="26" height="' + RH + '" fill="#fafafa" stroke="#555" stroke-width="0.5"/>' +
-          svgText(x + 13, ry + 12, r.n, { anchor: 'middle', size: 10 }) +
+          '<rect class="rowbg" x="' + (x + NW) + '" y="' + ry + '" width="' + (MW - NW - LANE) + '" height="' + RH + '" fill="#fff"/>' +
+          '<rect class="sock" x="' + x + '" y="' + ry + '" width="' + NW + '" height="' + RH + '" fill="#fafafa" stroke="#555" stroke-width="0.5"/>' +
+          svgText(x + NW / 2, ry + 10, r.n, { anchor: 'middle', size: 9 }) +
           '<rect x="' + (x + MW - LANE) + '" y="' + ry + '" width="' + LANE + '" height="' + RH + '" fill="#fffdf2" stroke="#ddd" stroke-width="0.5"/>' +
-          svgText(x + 26 + 6, ry + 12, r.text || '', { size: 10, fill: '#333' }) + '</g>');
+          svgText(x + NW + 5, ry + 10, r.text || '', { size: 9, fill: '#333' }) + '</g>');
         if (r.keyRear) anchor[r.keyRear] = { x: x, xr: x + MW, y: ry + RH / 2, side: 'M' };
         if (r.keyFront) anchor[r.keyFront] = { x: x + MW - LANE + 6, y: ry + RH / 2, side: 'F' };
       });
@@ -397,7 +397,7 @@
     }
 
     // Layout columns
-    var yl = 30, yr = 30, ym = 30;
+    var yl = 24, yr = 24, ym = 24;
     left.forEach(function (id) { yl += cableTable(id, xL, yl, 'L') + GAP; });
     right.forEach(function (id) { yr += cableTable(id, xR, yr, 'R') + GAP; });
     panels.forEach(function (p) {
@@ -429,7 +429,7 @@
       var rows = (d.ports || []).map(function (pt) { return { n: '', text: pt, keyRear: key(nid, 'D', d.id, pt), keyFront: key(nid, 'D', d.id, pt) }; });
       ym += midBox(d.name, rows, xM, ym, 'D') + GAP;
     });
-    var H = Math.max(yl, yr, ym, 60) + 30;
+    var H = Math.max(yl, yr, ym, 60) + 14;
 
     // Joints
     var done = {}, patchNo = 0;
@@ -443,7 +443,7 @@
         if (!a || !b) return;
         var dash = e.assumed ? ' stroke-dasharray="5 4"' : e.t === 'through' ? ' stroke-dasharray="1 0"' : '';
         if (e.t === 'patch') {
-          var lx = Math.min(a.x, b.x), bulge = 8 + (patchNo++ % 5) * 7;
+          var lx = Math.min(a.x, b.x), bulge = 6 + (patchNo++ % 5) * 4.5;
           var pd = 'M' + lx + ',' + a.y + ' C' + (lx + bulge) + ',' + a.y + ' ' + (lx + bulge) + ',' + b.y + ' ' + lx + ',' + b.y;
           var nameOf = function (kk) {
             var q = parseKey(kk);
@@ -480,8 +480,8 @@
       });
     });
 
-    var head = svgText(8, 18, node.name || nid, { bold: true, size: 12 });
-    var legend = svgText(8, H - 10, 'Coloured lines: fusion splices (□ = splice, T = tray) · thick lines: express fibres, not cut · yellow loops: LC patch leads · dashed: assumed', { size: 10, fill: '#666' });
+    var head = svgText(8, 14, node.name || nid, { bold: true, size: 11 });
+    var legend = svgText(8, H - 8, 'Coloured lines: fusion splices (□ = splice, T = tray) · thick lines: express fibres, not cut · yellow loops: LC patch leads · dashed: assumed', { size: 8, fill: '#666' });
     return '<svg class="fx-svg" xmlns="http://www.w3.org/2000/svg" style="max-width:' + W + 'px" viewBox="0 0 ' + W + ' ' + H +
       '" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">' + '<rect width="100%" height="100%" fill="#fff"/>' + head + '<g class="L-lines">' + lines.join('') + '</g><g class="L-boxes">' + out.join('') + '</g><g class="L-patches">' + arcs.join('') + '</g>' + legend + '</svg>';
   }

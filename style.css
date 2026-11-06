@@ -90,7 +90,7 @@ body {
 .fx-close { border: 0; background: none; font-size: 26px; line-height: 1; cursor: pointer; color: #555; padding: 0 4px; }
 .fx-body { min-width: 0; overflow: auto; padding: 10px 12px 24px; flex: 1; -webkit-overflow-scrolling: touch; }
 .fx-scroll { overflow-x: auto; }
-.fx-svg { display: block; width: 100%; min-width: 600px; height: auto; }
+.fx-svg { display: block; width: 100%; min-width: 420px; height: auto; }
 .fx-note { color: #666; font-size: 12px; margin: 8px 0; }
 .fx-sub { color: #666; font-size: 11px; display: inline-block; margin-left: 4px; }
 .fx-btns { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
