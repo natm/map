@@ -202,7 +202,7 @@
       if (v === null || v === undefined) v = '';
       if (k === 'ducts' && Array.isArray(v)) {
         var dl = v.map(function (du, i) {
-          return (i + 1) + '. ' + esc(du.od_mm) + ' mm ' + esc([du.colour, du.type].filter(Boolean).join(' ')) + (du.cables ? ' · cables: ' + esc(du.cables) : '');
+          return '<b>' + esc(du.id || (i + 1)) + '</b>: ' + esc(du.od_mm) + ' mm ' + esc([du.colour, du.type].filter(Boolean).join(' ')) + (du.cables ? ' · cables: ' + esc(du.cables) : ' · no cables recorded');
         }).join('<br>');
         return '<tr><th>ducts</th><td><b>' + v.length + (v.length === 1 ? ' duct' : ' ducts') + '</b><br>' + dl + '</td></tr>';
       }
