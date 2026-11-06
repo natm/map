@@ -57,7 +57,7 @@
     var how = { 'gps-phone': 'phone GPS', 'gps-rtk': 'RTK GPS', 'measured': 'measured', 'confirmed': 'confirmed on site', 'aerial-trace': 'traced from the aerial photo', 'description': 'from a description' }[(p.method || '').toLowerCase()] || '';
     if (t === 'surveyed') return '<div class="acc acc-ok">✅ ' + what + ' surveyed: ' + how + acc + '</div>';
     if (t === 'approx') return '<div class="acc acc-approx">〰️ ' + what + ' approximate: ' + how + acc + '. Survey on the ground to confirm.</div>';
-    return '<div class="acc acc-assumed">⚠️ ' + what + ' assumed' + (isLine ? ': a straight line between its ends, not the real route' : '') + '. Needs surveying.</div>';
+    return '<div class="acc acc-assumed">⚠️ ' + what + ' assumed' + (isLine ? ': drawn with straight lines, not the real path' : '') + '. Needs surveying.</div>';
   }
 
   function lineStyle(layer, p) {
@@ -352,6 +352,22 @@
         ll.forEach(push);
       }
       if (pts.length < 2) return false;
+      // The line is only as certain as its least certain part: any assumed duct, or any gap of more than
+      // 5 m between steps with no duct (a guessed straight join), makes the whole cable 'assumed'.
+      var worst = 'surveyed', rank = { surveyed: 0, approx: 1, assumed: 2 };
+      for (var j = 0; j < route.length; j++) {
+        var rf = featureById[route[j]] || featureById[String(route[j]).split('/')[0]];
+        if (rf && !rf.getLatLng && !(rf instanceof L.Polygon)) {
+          var t2 = tier(rf.feature.properties || {});
+          if (rank[t2] > rank[worst]) worst = t2;
+        } else if (j > 0) {
+          var pf = featureById[route[j - 1]];
+          if (pf && pf.getLatLng && rf && rf.getLatLng && pf.getLatLng().distanceTo(rf.getLatLng()) > 5) worst = 'assumed';
+        }
+      }
+      props = L.extend({}, props);
+      if (worst === 'assumed') { props.method = 'assumed'; delete props.accuracy_m; props.notes += ' ⚠️ Part of the route (a duct or a join) is assumed, so the cable\'s line is too.'; }
+      else if (worst === 'surveyed') { props.method = 'measured'; }
       var f2 = { type: 'Feature', properties: props, geometry: { type: 'LineString', coordinates: pts.map(function (p) { return [p.lng, p.lat]; }) } };
       L.geoJSON(f2, geoOptions('fibre')).addTo(groups.fibre);
       return true;
