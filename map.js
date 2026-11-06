@@ -189,7 +189,8 @@
     if (!near.length) return '';
     return '<div class="also"><div class="also-h">Also here</div>' + near.map(function (x) {
       var q = x.p;
-      return '<div class="also-item"><a href="#feature=' + esc(q.id) + '" class="also-name">' + esc(q.name || q.id) + '</a>' +
+      var ic = window.FibreIcons ? window.FibreIcons.iconFor(q.id) : '';
+      return '<div class="also-item"><a href="#feature=' + esc(q.id) + '" class="also-name">' + (ic ? ic + ' ' : '') + esc(q.name || q.id) + '</a>' +
         (q.type ? ' <span class="also-type">' + esc(q.type) + '</span>' : '') + thumbsHtml(q) +
         (window.FibreNet ? window.FibreNet.popupExtras(q) : '') + '</div>';
     }).join('') + '</div>';
@@ -216,7 +217,8 @@
       }
       return '<tr><th>' + esc(k) + '</th><td>' + cell + '</td></tr>';
     });
-    var title = p.name ? '<strong>' + esc(p.name) + '</strong>' : '';
+    var tic = window.FibreIcons && p.id ? window.FibreIcons.iconFor(p.id) : '';
+    var title = p.name ? '<strong>' + (tic ? tic + ' ' : '') + esc(p.name) + '</strong>' : '';
     var extras = window.FibreNet ? window.FibreNet.popupExtras(p) : '';
     return title + accuracyBadge(p, isLine) + pics + extras + alsoHere(p, latlng) + '<table class="props">' + rows.join('') + '</table>';
   }

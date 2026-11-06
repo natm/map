@@ -15,6 +15,20 @@
   var LIGHT = { White: 1, Yellow: 1, Rose: 1, Aqua: 1 };
   var PATCH = '#e6b800';
 
+  // One icon per kind of thing, used on every link and button: 🧵 cable · ⭕ duct · 🕳️ chamber · 📦 box/enclosure on the map ·
+  // 🔀 splice diagram · 🧭 link trace · 📍 details and photos.
+  var ICON = { cable: '🧵', duct: '⭕', chamber: '🕳️', box: '📦', splice: '🔀', trace: '🧭', details: '📍' };
+  function iconFor(id) {
+    if (net && net.cables && net.cables[id]) return ICON.cable;
+    if (String(id).indexOf('/') > 0) return ICON.duct;
+    var inf = window.SiteMap && window.SiteMap.featureInfo(id);
+    if (!inf) return '';
+    if (inf.type === 'duct') return ICON.duct;
+    if (['manhole', 'chamber', 'valve_box', 'draw_pit'].indexOf(inf.type) >= 0) return ICON.chamber;
+    return ICON.box;
+  }
+  window.FibreIcons = { ICON: ICON, iconFor: iconFor };
+
   var net = null;
   var adj = {};
   var traces = {};   // circuit id -> sequence
@@ -196,10 +210,10 @@
     var steps = r.slice(1, -1).map(function (id) {
       var inf = window.SiteMap.featureInfo(id) || {};
       if (String(id).indexOf('/') > 0) {
-        return '<li class="duct">duct <a href="#" data-fx="feature" data-id="' + esc(String(id).split('/')[0]) + '">' + esc(id) + '</a>' +
+        return '<li class="duct"><a href="#" data-fx="feature" data-id="' + esc(String(id).split('/')[0]) + '">' + ICON.duct + ' ' + esc(id) + '</a>' +
           (inf.od_mm ? ' <span class="fx-sub">' + esc(inf.od_mm) + ' mm ' + esc([inf.colour, inf.type].filter(Boolean).join(' ')) + '</span>' : '') + '</li>';
       }
-      return '<li class="chamber"><a href="#" data-fx="feature" data-id="' + esc(id) + '">' + esc(id) + '</a>' + (inf.name && inf.name !== id ? ' <span class="fx-sub">' + esc(inf.name) + '</span>' : '') + '</li>';
+      return '<li class="chamber"><a href="#" data-fx="feature" data-id="' + esc(id) + '">' + iconFor(id) + ' ' + esc(id) + '</a>' + (inf.name && inf.name !== id ? ' <span class="fx-sub">' + esc(inf.name) + '</span>' : '') + '</li>';
     });
     return '<ol class="fx-route">' + steps.join('') + '</ol>';
   }
@@ -210,7 +224,7 @@
       if (seq[i].edge) {   // a cable between nodes
         var e = seq[i].edge, c = net.cables[e.cable];
         var fromNode = i > 0 && seq[i - 1].key ? parseKey(seq[i - 1].key).node : null;
-        html += '<div class="fx-cable"><div class="fx-line" style="border-color:' + fibreColour(c, e.fibre).hex + '"></div><div class="fx-clabel"><a href="#" data-fx="cable" data-id="' + esc(e.cable) + '"><b>' +
+        html += '<div class="fx-cable"><div class="fx-line" style="border-color:' + fibreColour(c, e.fibre).hex + '"></div><div class="fx-clabel"><a href="#" data-fx="cable" data-id="' + esc(e.cable) + '">' + ICON.cable + ' <b>' +
           esc(e.cable) + '</b></a> fibre ' + e.fibre + ' ' + chip(e.cable, e.fibre) + '<br><span class="fx-sub">' + esc(c.name) + ', ' + c.fibres + 'F</span>' +
           routeHtml(c, fromNode) + '</div></div>';
         i++; continue;
@@ -232,7 +246,7 @@
       else if (i >= seq.length) inner += endNote(seq[i - 1].key, false);
       var onMap = window.SiteMap.hasFeature(nid);
       html += '<div class="fx-node"><div class="fx-nname">' +
-        (onMap ? '<a href="#" data-fx="feature" data-id="' + esc(nid) + '">' + esc(node.name || nid) + '</a>' : esc(node.name || nid)) +
+        (onMap ? '<a href="#" data-fx="feature" data-id="' + esc(nid) + '">' + iconFor(nid) + ' ' + esc(node.name || nid) + '</a>' : esc(node.name || nid)) +
         (node.where ? '<span class="fx-sub">' + esc(node.where) + '</span>' : '') +
         '<span class="fx-nbtns">' +
         (onMap ? '<button class="fx-btn small" data-fx="feature" data-id="' + esc(nid) + '">📍 Details and photos</button>' : '') +
@@ -246,7 +260,7 @@
     window.SiteMap.closePopup();
     var showRoutes = false;
     try { showRoutes = localStorage.getItem('fx-show-routes') === '1'; } catch (e) {}
-    openPanel(name, '<label class="fx-toggle"><input type="checkbox" class="fx-routes-toggle"' + (showRoutes ? ' checked' : '') + '> Show chambers and ducts along each cable</label>' +
+    openPanel(ICON.trace + ' ' + name, '<label class="fx-toggle"><input type="checkbox" class="fx-routes-toggle"' + (showRoutes ? ' checked' : '') + '> Show chambers and ducts along each cable</label>' +
       '<div class="fx-trace-wrap' + (showRoutes ? ' show-routes' : '') + '">' + traceHtml(seq) + '</div>' +
       '<p class="fx-note">Cables on this path are highlighted on the map. Dashed joints are assumed, not checked on site.</p>');
     var cb = body.querySelector('.fx-routes-toggle');
@@ -535,7 +549,7 @@
     html = '<div class="fx-btns" style="margin:0 0 8px">' + jump + '</div>' + html;
     var cs = circuitsAt(nid);
     if (cs.length) html += '<div class="fx-btns"><div class="fx-sub">Trace a link through here:</div>' + traceButtons(cs) + '</div>';
-    openPanel('Splices: ' + (node.name || nid), html);
+    openPanel(ICON.splice + ' Splices: ' + (node.name || nid), html);
     wirePatchHover();
     var ids = Object.keys(net.cables).filter(function (id) { return net.cables[id].a === nid || net.cables[id].b === nid; });
     window.SiteMap.highlightIds(ids, false);
@@ -614,7 +628,7 @@
     isOpen: function () { return !!(panel && panel.classList.contains('open')); },
     cableOpened: function (id) {
       if (!net || !net.cables[id]) return;
-      openPanel('Cable ' + id + ': ' + net.cables[id].name, cableHtml(id));
+      openPanel(ICON.cable + ' Cable ' + id + ': ' + net.cables[id].name, cableHtml(id));
     },
     popupExtras: function (p) {
       if (!net || !p || !p.id) return '';
@@ -623,14 +637,14 @@
       if (p.type === 'duct') {
         var ends = String(p.id).split('-');
         var endLinks = ends.map(function (e2) {
-          return window.SiteMap.hasFeature(e2) ? '<a href="#feature=' + esc(e2) + '">' + esc(e2) + '</a>' + ((window.SiteMap.featureInfo(e2) || {}).name ? ' <span class="fx-sub">' + esc(window.SiteMap.featureInfo(e2).name) + '</span>' : '') : esc(e2);
+          return window.SiteMap.hasFeature(e2) ? '<a href="#feature=' + esc(e2) + '">' + iconFor(e2) + ' ' + esc(e2) + '</a>' + ((window.SiteMap.featureInfo(e2) || {}).name ? ' <span class="fx-sub">' + esc(window.SiteMap.featureInfo(e2).name) + '</span>' : '') : esc(e2);
         }).join(' ↔ ');
         var allCables = [];
         var ductRows = (p.ducts || []).map(function (du) {
           var cs = Object.keys(net.cables).filter(function (id) { return (net.cables[id].route || []).indexOf(du.id) >= 0; });
           cs.forEach(function (c2) { if (allCables.indexOf(c2) < 0) allCables.push(c2); });
-          return '<li><b>' + esc(du.id) + '</b> <span class="fx-sub">' + esc(du.od_mm) + ' mm ' + esc([du.colour, du.type].filter(Boolean).join(' ')) + '</span>: ' +
-            (cs.length ? cs.map(function (c2) { return '<a href="#" data-fx="cable" data-id="' + esc(c2) + '"><b>' + esc(c2) + '</b></a> <span class="fx-sub">' + net.cables[c2].fibres + 'F</span>'; }).join(', ') : '<span class="fx-sub">no cables recorded</span>') + '</li>';
+          return '<li>' + ICON.duct + ' <b>' + esc(du.id) + '</b> <span class="fx-sub">' + esc(du.od_mm) + ' mm ' + esc([du.colour, du.type].filter(Boolean).join(' ')) + '</span>: ' +
+            (cs.length ? cs.map(function (c2) { return '<a href="#" data-fx="cable" data-id="' + esc(c2) + '">' + ICON.cable + ' <b>' + esc(c2) + '</b></a> <span class="fx-sub">' + net.cables[c2].fibres + 'F</span>'; }).join(', ') : '<span class="fx-sub">no cables recorded</span>') + '</li>';
         }).join('');
         var links = [];
         allCables.forEach(function (c2) { circuitsOn(c2).forEach(function (ci) { if (links.indexOf(ci) < 0) links.push(ci); }); });
@@ -647,10 +661,10 @@
           var r = net.cables[id].route, i = r.indexOf(p.id);
           var prev = i > 0 ? r[i - 1] : null, next = i < r.length - 1 ? r[i + 1] : null;
           var how = i === 0 || i === r.length - 1 ? 'ends here' : 'from ' + esc(prev) + ' to ' + esc(next);
-          return '<li><a href="#" data-fx="cable" data-id="' + esc(id) + '"><b>' + esc(id) + '</b></a> <span class="fx-sub">' + net.cables[id].fibres + 'F · ' + how + '</span></li>';
+          return '<li><a href="#" data-fx="cable" data-id="' + esc(id) + '">' + ICON.cable + ' <b>' + esc(id) + '</b></a> <span class="fx-sub">' + net.cables[id].fibres + 'F · ' + how + '</span></li>';
         }).join('');
         html += '<div class="also"><div class="also-h">Cables through here</div>' + (rows ? '<ul class="fx-through">' + rows + '</ul>' : '<div class="fx-sub">None recorded</div>') +
-          (dr.length ? '<div class="fx-sub" style="margin:2px 0 0">Ducts: ' + dr.map(function (k) { return '<a href="#feature=' + esc(k) + '">' + esc(k) + '</a>'; }).join(', ') + '</div>' : '') + '</div>';
+          (dr.length ? '<div class="fx-sub" style="margin:2px 0 0">Ducts: ' + dr.map(function (k) { return '<a href="#feature=' + esc(k) + '">' + ICON.duct + ' ' + esc(k) + '</a>'; }).join(', ') + '</div>' : '') + '</div>';
       }
       if (net.nodes[p.id]) {
         html += '<button class="fx-btn" data-fx="splice" data-node="' + esc(p.id) + '">🔀 Splice diagram</button>';
