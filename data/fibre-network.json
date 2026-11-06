@@ -13,7 +13,19 @@
       "name": "Woods pole to 2 The Cottage",
       "fibres": 8,
       "a": "WOODS",
-      "b": "C2-ENC"
+      "b": "C2-ENC",
+      "route": [
+        "WOODS",
+        "MH12",
+        "MH13-MH12/1",
+        "MH13",
+        "MH13-MH14/1",
+        "MH14",
+        "MH14-MH15/1",
+        "MH15",
+        "C2-ENC"
+      ],
+      "route_source": "Nat, 2026-11-06"
     },
     "F05": {
       "name": "2 The Cottage to 1 The Cottage",
@@ -72,10 +84,10 @@
       "documented": false
     },
     "WOODS": {
-      "name": "Woods pole",
-      "where": "Splice point in the woods (\"pole in woods\" on the 2 The Cottage label)",
+      "name": "Woods 1U splice tray enclosure",
+      "where": "1U splice tray enclosure in the woods, reached from MH12 (\"pole in woods\" on the 2 The Cottage label); exact position not yet mapped",
       "documented": false,
-      "notes": "All 8 fibres of F04 are spliced here, presumably to F03 fibres. Which ones is not yet known."
+      "notes": "F04 arrives here from MH12 through duct MH13-MH12. All 8 F04 fibres are spliced here, presumably to F03 fibres; which ones is not yet known."
     },
     "C2-ENC": {
       "name": "2 The Cottage enclosure",

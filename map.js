@@ -340,6 +340,9 @@
       var pts = [];
       function last() { return pts.length ? pts[pts.length - 1] : null; }
       function push(ll) { var l = last(); if (!l || l.distanceTo(ll) > 0.3) pts.push(ll); }
+      // Ends not on the map yet (e.g. an enclosure still to be placed) are skipped; anything missing in the middle stops the drawing.
+      while (route.length && !featureById[route[0]] && !featureById[String(route[0]).split('/')[0]]) route = route.slice(1);
+      while (route.length && !featureById[route[route.length - 1]] && !featureById[String(route[route.length - 1]).split('/')[0]]) route = route.slice(0, -1);
       for (var i = 0; i < route.length; i++) {
         var r = route[i], rid = String(r).split('/')[0];
         var f = featureById[r] || featureById[rid];
