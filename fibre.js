@@ -277,6 +277,20 @@
 
   function spliceSvg(nid) {
     var node = net.nodes[nid];
+    // Connected paths inside this enclosure (splices, port pass-through, patches), so hovering any part
+    // of a path can highlight all of it: fibre, splice, socket, port label, patch lead, device port.
+    var comp = {}, nextComp = 0;
+    Object.keys(adj).forEach(function (k0) {
+      if (k0.indexOf(nid + '|') !== 0 || comp[k0] !== undefined) return;
+      var stack = [k0], c0 = nextComp++;
+      while (stack.length) {
+        var kk = stack.pop();
+        if (comp[kk] !== undefined) continue;
+        comp[kk] = c0;
+        (adj[kk] || []).forEach(function (x) { if (x.e.t !== 'cable' && comp[x.to] === undefined) stack.push(x.to); });
+      }
+    });
+    function cOf(k) { if (comp[k] === undefined) comp[k] = nextComp++; return comp[k]; }
     var cablesHere = Object.keys(net.cables).filter(function (id) { return net.cables[id].a === nid || net.cables[id].b === nid; });
     var lay = node.layout || {};
     var left = (lay.left || []).filter(function (id) { return cablesHere.indexOf(id) >= 0; });
@@ -331,9 +345,9 @@
       for (var i = 1; i <= c.fibres; i++) {
         var fc = fibreColour(c, i), ry = y + HH + (i - 1) * RH;
         var k = key(nid, 'C', id, i), isUsed = !!u[k];
-        out.push('<rect x="' + px + '" y="' + (ry + 1) + '" width="' + pw + '" height="' + (RH - 2) + '" rx="4" fill="' + fc.hex + '" stroke="#333" stroke-width="0.6"' +
-          (isUsed ? '' : ' fill-opacity="0.35"') + '/>');
-        out.push(svgText(px + pw / 2, ry + 12, i + '  ' + fc.name + (isUsed ? '' : ' (spare)'), { anchor: 'middle', fill: LIGHT[fc.name] || !isUsed ? '#222' : '#fff', size: 10 }));
+        out.push('<g class="fxe" data-c="' + cOf(k) + '"><rect class="pill" x="' + px + '" y="' + (ry + 1) + '" width="' + pw + '" height="' + (RH - 2) + '" rx="4" fill="' + fc.hex + '" stroke="#333" stroke-width="0.6"' +
+          (isUsed ? '' : ' fill-opacity="0.35"') + '/>' +
+          svgText(px + pw / 2, ry + 12, i + '  ' + fc.name + (isUsed ? '' : ' (spare)'), { anchor: 'middle', fill: LIGHT[fc.name] || !isUsed ? '#222' : '#fff', size: 10 }) + '</g>');
         anchor[k] = { x: side === 'L' ? x + TW : x, y: ry + RH / 2, side: side };
       }
       return h;
@@ -346,11 +360,13 @@
       out.push(svgText(x + MW / 2, y + 15, label.length > 44 ? label.slice(0, 42) + '…' : label, { anchor: 'middle', bold: true, size: 10 }));
       rows.forEach(function (r, i) {
         var ry = y + HH + i * RH;
-        out.push('<rect x="' + x + '" y="' + ry + '" width="26" height="' + RH + '" fill="#fafafa" stroke="#555" stroke-width="0.5"/>');
-        out.push(svgText(x + 13, ry + 12, r.n, { anchor: 'middle', size: 10 }));
-        // [n][label ........][patch lane]: splices arrive on the left edge, patch leads loop on the right.
-        out.push('<rect x="' + (x + MW - LANE) + '" y="' + ry + '" width="' + LANE + '" height="' + RH + '" fill="#fffdf2" stroke="#ddd" stroke-width="0.5"/>');
-        out.push(svgText(x + 26 + 6, ry + 12, r.text || '', { size: 10, fill: '#333' }));
+        // [socket n][port description ........][patch lane]: splices arrive on the left edge, patch leads loop on the right.
+        out.push('<g class="fxe row" data-c="' + cOf(r.keyRear || r.keyFront) + '">' +
+          '<rect class="rowbg" x="' + (x + 26) + '" y="' + ry + '" width="' + (MW - 26 - LANE) + '" height="' + RH + '" fill="#fff"/>' +
+          '<rect class="sock" x="' + x + '" y="' + ry + '" width="26" height="' + RH + '" fill="#fafafa" stroke="#555" stroke-width="0.5"/>' +
+          svgText(x + 13, ry + 12, r.n, { anchor: 'middle', size: 10 }) +
+          '<rect x="' + (x + MW - LANE) + '" y="' + ry + '" width="' + LANE + '" height="' + RH + '" fill="#fffdf2" stroke="#ddd" stroke-width="0.5"/>' +
+          svgText(x + 26 + 6, ry + 12, r.text || '', { size: 10, fill: '#333' }) + '</g>');
         if (r.keyRear) anchor[r.keyRear] = { x: x, xr: x + MW, y: ry + RH / 2, side: 'M' };
         if (r.keyFront) anchor[r.keyFront] = { x: x + MW - LANE + 6, y: ry + RH / 2, side: 'F' };
       });
@@ -387,9 +403,18 @@
         var dash = e.assumed ? ' stroke-dasharray="5 4"' : e.t === 'through' ? ' stroke-dasharray="1 0"' : '';
         if (e.t === 'patch') {
           var lx = Math.min(a.x, b.x), bulge = 8 + (patchNo++ % 5) * 7;
-          arcs.push('<path d="M' + lx + ',' + a.y + ' C' + (lx + bulge) + ',' + a.y + ' ' + (lx + bulge) + ',' + b.y + ' ' + lx + ',' + b.y +
-            '" fill="none" stroke="' + PATCH + '" stroke-width="3"' + dash + '/>');
-          arcs.push('<circle cx="' + lx + '" cy="' + a.y + '" r="2.5" fill="#8a6d00"/><circle cx="' + lx + '" cy="' + b.y + '" r="2.5" fill="#8a6d00"/>');
+          var pd = 'M' + lx + ',' + a.y + ' C' + (lx + bulge) + ',' + a.y + ' ' + (lx + bulge) + ',' + b.y + ' ' + lx + ',' + b.y;
+          var nameOf = function (kk) {
+            var q = parseKey(kk);
+            if (q.t === 'D') { var dv = (node.devices || []).filter(function (x) { return x.id === q.el; })[0] || {}; return (dv.name || q.el) + ' ' + q.n; }
+            var pn = (node.panels || []).filter(function (x) { return x.id === q.el; })[0] || {};
+            return (pn.connector || 'port').split('/')[0] + ' ' + q.n;
+          };
+          // One group per patch lead: a wide invisible hit area, the lead itself and its two plugs. Hover (or tap) highlights it.
+          arcs.push('<g class="fx-patch fxe" data-c="' + cOf(k) + '"><title>Patch lead: ' + esc(nameOf(k)) + ' ↔ ' + esc(nameOf(x.to)) + (e.assumed ? ' (assumed)' : '') + '</title>' +
+            '<path class="hit" d="' + pd + '" fill="none" stroke="transparent" stroke-width="12"/>' +
+            '<path class="vis" d="' + pd + '" fill="none" stroke="' + PATCH + '" stroke-width="3"' + dash + '/>' +
+            '<circle cx="' + lx + '" cy="' + a.y + '" r="2.5" fill="#8a6d00"/><circle cx="' + lx + '" cy="' + b.y + '" r="2.5" fill="#8a6d00"/></g>');
           return;
         }
         // splice: colour of the fibre end involved
@@ -402,13 +427,15 @@
         var pa = pt(a, b), pb = pt(b, a);
         var mx = (pa.x + pb.x) / 2;
         var d = 'M' + pa.x + ',' + pa.y + ' C' + mx + ',' + pa.y + ' ' + mx + ',' + pb.y + ' ' + pb.x + ',' + pb.y;
-        if (LIGHT[col.name] || e.t === 'through') lines.push('<path d="' + d + '" fill="none" stroke="#555" stroke-width="' + (e.t === 'through' ? 5 : 3.6) + '"' + dash + '/>');
-        lines.push('<path d="' + d + '" fill="none" stroke="' + col.hex + '" stroke-width="' + (e.t === 'through' ? 3 : 2.2) + '"' + dash + '/>');
+        lines.push('<g class="fxe" data-c="' + cOf(k) + '"><path class="hit" d="' + d + '" fill="none" stroke="transparent" stroke-width="10"/>');
+        if (LIGHT[col.name] || e.t === 'through') lines.push('<path class="ln" d="' + d + '" fill="none" stroke="#555" stroke-width="' + (e.t === 'through' ? 5 : 3.6) + '"' + dash + '/>');
+        lines.push('<path class="ln" d="' + d + '" fill="none" stroke="' + col.hex + '" stroke-width="' + (e.t === 'through' ? 3 : 2.2) + '"' + dash + '/>');
         if (e.t === 'splice') {   // splice mark (and tray number) at the midpoint
           var my = (pa.y + pb.y) / 2;
           lines.push('<rect x="' + (mx - 4) + '" y="' + (my - 4) + '" width="8" height="8" rx="1.5" fill="#fff" stroke="#333"/>');
           if (e.tray) lines.push(svgText(mx + 7, my + 3, 'T' + e.tray, { size: 8, fill: '#555' }));
         }
+        lines.push('</g>');
       });
     });
 
@@ -428,6 +455,30 @@
     return list.map(function (c) { return '<button class="fx-btn" data-fx="trace" data-circuit="' + esc(c.id) + '">🧭 ' + esc(c.name) + '</button>'; }).join('');
   }
 
+  function wirePatchHover() {
+    var svg = body && body.querySelector('.fx-svg');
+    if (!svg) return;
+    var locked = null;
+    function mark(c) {
+      Array.prototype.forEach.call(svg.querySelectorAll('.fxe'), function (g) {
+        var on = c !== null && g.getAttribute('data-c') === c;
+        g.classList.toggle('hl', on);
+        if (on && g.parentNode) g.parentNode.appendChild(g);   // draw the highlighted path on top
+      });
+      svg.classList.toggle('has-hl', c !== null);
+    }
+    Array.prototype.forEach.call(svg.querySelectorAll('.fxe'), function (g) {
+      g.addEventListener('mouseenter', function () { if (locked === null) mark(g.getAttribute('data-c')); });
+      g.addEventListener('mouseleave', function () { if (locked === null) mark(null); });
+      g.addEventListener('click', function (ev) {   // tap (phones) or click locks the highlight; again to clear
+        ev.stopPropagation();
+        var c = g.getAttribute('data-c');
+        locked = locked === c ? null : c;
+        mark(locked);
+      });
+    });
+  }
+
   function showSplices(nid) {
     var node = net.nodes[nid];
     window.SiteMap.closePopup();
@@ -441,6 +492,7 @@
     var cs = circuitsAt(nid);
     if (cs.length) html += '<div class="fx-btns"><div class="fx-sub">Trace a link through here:</div>' + traceButtons(cs) + '</div>';
     openPanel('Splices: ' + (node.name || nid), html);
+    wirePatchHover();
     var ids = Object.keys(net.cables).filter(function (id) { return net.cables[id].a === nid || net.cables[id].b === nid; });
     window.SiteMap.highlightIds(ids, false);
   }

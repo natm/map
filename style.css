@@ -143,3 +143,14 @@ body {
 .fx-route li.duct::marker, .fx-route li.chamber::marker { color: #999; }
 .fx-through { margin: 2px 0; padding-left: 16px; font-size: 12px; }
 .fx-through a { color: #0b5cad; text-decoration: none; }
+
+/* Splice diagram: hovering (or tapping) any part of a path highlights the whole path in the enclosure */
+.fxe { cursor: pointer; }
+.fx-svg.has-hl .fxe:not(.hl) { opacity: 0.22; }
+.fxe.hl .ln { stroke-width: 4.5; }
+.fxe.hl .vis { stroke: #ff6d00; stroke-width: 5; }
+.fxe.hl circle { fill: #ff6d00; }
+.fxe.hl .pill { stroke: #ff6d00; stroke-width: 2.5; }
+.fxe.hl .sock { fill: #ffe0b2; stroke: #ff6d00; stroke-width: 1.5; }
+.fxe.hl .rowbg { fill: #fff3e0; }
+.fxe.hl text { font-weight: bold; }
