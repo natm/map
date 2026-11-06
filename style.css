@@ -172,3 +172,51 @@ body {
 .fx-win-body { overflow: auto; padding: 8px 10px 14px; flex: 1; }
 .fx-win.flash { animation: fxflash .6s; }
 @keyframes fxflash { 0% { box-shadow: 0 0 0 4px #ff6d00; } 100% { box-shadow: 0 4px 22px rgba(0,0,0,.45); } }
+
+/* ===== Toolbar and drop-down panels (dark theme) ===== */
+:root { --ink: #eceff1; --panel: #1c2733; --panel2: #243241; --line: #33475a; --accent: #1e88e5; --accent2: #26a69a; }
+.leaflet-top.leaflet-left { top: 56px; }
+.tb { position: fixed; z-index: 1200; top: 10px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; box-shadow: 0 3px 14px rgba(0,0,0,.45);
+  max-width: calc(100vw - 20px); overflow-x: auto; scrollbar-width: none; font: 13px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.tb::-webkit-scrollbar { display: none; }
+.tb-brand { color: var(--ink); font-weight: 700; padding: 0 8px 0 4px; white-space: nowrap; letter-spacing: .02em; }
+.tb-btn { display: flex; align-items: center; gap: 5px; border: 0; border-radius: 7px; padding: 6px 10px; background: var(--accent); color: #fff;
+  font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.tb-btn:hover { filter: brightness(1.1); }
+.tb-btn.on { background: #fff; color: #1c2733; }
+.tb-dd { position: fixed; z-index: 1150; top: 62px; left: 50%; transform: translateX(-50%); width: min(380px, calc(100vw - 20px)); max-height: calc(100vh - 90px);
+  display: none; flex-direction: column; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 6px 22px rgba(0,0,0,.5); font: 13px/1.45 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.tb-dd.open { display: flex; }
+.tb-dd-head { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; font-weight: 700; color: #90caf9; border-bottom: 1px solid var(--line); }
+.tb-x { border: 0; background: none; color: #b0bec5; font-size: 22px; line-height: 1; cursor: pointer; }
+.tb-dd-body { overflow: auto; padding: 8px 12px 12px; }
+.tb-h { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #90a4ae; margin: 8px 0 4px; }
+.tb-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; cursor: pointer; }
+.tb-count { margin-left: auto; color: #90a4ae; font-size: 12px; }
+.tb-list { display: flex; flex-direction: column; gap: 6px; }
+.tb-item { display: flex; flex-direction: column; text-decoration: none; color: var(--ink); background: var(--panel2); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 10px; cursor: pointer; }
+a.tb-item:hover, .tb-item:hover { border-color: var(--accent); }
+.tb-item span { color: #b0bec5; font-size: 12px; }
+.tb-item .tb-meta { margin-top: 2px; }
+.tb-item a { color: #90caf9; }
+.tb-chip { display: inline-block; font-size: 10px; padding: 0 6px; border-radius: 8px; background: #455a64; color: #fff; margin-left: 4px; }
+.tb-chip.ok { background: #2e7d32; } .tb-chip.approx { background: #b26a00; } .tb-chip.assumed { background: #9c27b0; }
+.tb-legend { list-style: none; margin: 4px 0 8px; padding: 0; }
+.tb-legend li { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+.tb-sub { color: #b0bec5; font-size: 12px; margin: 4px 0; }
+@media (max-width: 700px) { .tb-lbl { display: none; } .tb-brand { display: none; } .tb-btn { padding: 6px 9px; font-size: 16px; } }
+
+/* Side panel and floating windows: dark title bars to match */
+.fx-head, .fx-win-head { background: var(--panel); color: var(--ink); border-bottom: 1px solid var(--line); }
+.fx-head .fx-close, .fx-win-head .fx-close { color: #b0bec5; }
+.fx-title, .fx-win-title { color: #90caf9; }
+.fx-btn { border-radius: 7px; border-color: #b0bec5; background: #f5f7f8; }
+.fx-btn:hover { background: #e3f2fd; border-color: var(--accent); }
+.also-h, .tb-h { font-weight: 600; }
+.leaflet-popup-content-wrapper { border-radius: 10px; }
+@media (min-width: 701px) {
+  body.panel-open .tb, body.panel-open .tb-dd { left: calc((100vw - min(640px, 100vw)) / 2); }
+}

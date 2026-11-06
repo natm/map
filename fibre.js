@@ -175,9 +175,11 @@
     body.innerHTML = html;
     body.scrollTop = 0; body.scrollLeft = 0;
     panel.classList.add('open');
+    document.body.classList.add('panel-open');
   }
   function closePanel() {
     if (panel) panel.classList.remove('open');
+    document.body.classList.remove('panel-open');
     window.SiteMap.clearHighlight();
   }
 
@@ -691,6 +693,16 @@
     cablesInDuct: function (ductId) {
       if (!net) return '';
       return Object.keys(net.cables).filter(function (id) { return (net.cables[id].route || []).indexOf(ductId) >= 0; }).join(', ');
+    },
+    // Lists for the toolbar's drop-downs.
+    lists: function () {
+      if (!net) return null;
+      return {
+        circuits: net.circuits || [],
+        cables: Object.keys(net.cables).sort().map(function (id) { return { id: id, name: net.cables[id].name, fibres: net.cables[id].fibres }; }),
+        nodes: Object.keys(net.nodes).map(function (id) { var n = net.nodes[id]; return { id: id, name: n.name || id, documented: !!n.documented }; })
+          .sort(function (a, b) { return (b.documented - a.documented) || a.name.localeCompare(b.name); })
+      };
     },
     isOpen: function () { return !!(panel && panel.classList.contains('open')) || Object.keys(wins).length > 0; },
     cableOpened: function (id) {

@@ -457,7 +457,7 @@
     }
   };
 
-  var overlays = {}, groups = {}, loaded = 0;
+  var overlays = {}, groups = {}, loaded = 0, layerCounts = {};
 
   function geoOptions(name) {
     return {
@@ -504,6 +504,7 @@
           });
         }
         L.geoJSON(data, geoOptions(name)).addTo(group);
+        layerCounts[name] = (data.features || []).length;
         loaded++;
         if (loaded === LAYERS.length && window.FibreNet) window.FibreNet.mapReady();
         openFeatureFromHash();
@@ -515,7 +516,7 @@
       });
   });
 
-  L.control.layers({ 'Aerial (Esri)': aerial, 'Map (OpenStreetMap)': osm }, overlays, { collapsed: true }).addTo(map);
+
   L.control.scale({ metric: true, imperial: true }).addTo(map);
 
   // ---- Locate me ----
@@ -547,33 +548,99 @@
   });
   map.on('locationerror', function (e) { alert('Location unavailable: ' + e.message); });
 
-  // ---- Title and legend ----
-  var Info = L.Control.extend({
-    options: { position: 'bottomleft' },
-    onAdd: function () {
-      var div = L.DomUtil.create('div', 'info-box collapsed');
-      var items = [
-        ['#1f78d1', 'Water'], ['#8b5a2b', 'Openreach'], ['#f39c12', 'Fibre'],
-        ['#999999', 'Duct'], ['#d62728', 'Electric'], ['#8e44ad', 'CCTV view']
-      ].map(function (i) {
-        return '<li><span class="swatch" style="border-color:' + i[0] + '"></span>' + i[1] + '</li>';
-      }).join('');
-      div.innerHTML =
-        '<h1 title="Tap for legend">Llwynygorras site map</h1>' +
-        '<div class="updated">Last updated ' + UPDATED + '</div>' +
-        '<ul>' + items +
-        '<li><span class="swatch" style="border-color:#333"></span>Surveyed (GPS / measured)</li>' +
-        '<li><span class="swatch dashed" style="border-color:#333"></span>Approximate (traced from aerial)</li>' +
-        '<li><span class="swatch dotted" style="border-color:' + ASSUMED + '"></span>Assumed (e.g. straight line): needs surveying</li>' +
-        '<li class="ends">Fibre ends: <b>P</b> patch panel, <b>S</b> splice closure, <b>W</b> wall box, <b>C</b> cabinet, <b>B</b> pedestal, <b>O</b> ONT</li></ul>' +
-        '<div class="note">Tap a cable to highlight its whole route.</div>' +
-        '<div class="note">Positions are approximate; check popups for method and accuracy.</div>';
-      L.DomEvent.disableClickPropagation(div);
-      div.querySelector('h1').addEventListener('click', function () {
-        div.classList.toggle('collapsed');
-      });
-      return div;
+  // ---- Toolbar and drop-down panels ----
+  // A floating bar across the top: the site name, then buttons that open one dark panel at a time
+  // (layers, links, cables, enclosures, chambers, legend). Lists come from the map and the fibre model.
+  function legendHtml() {
+    var items = [
+      ['#1f78d1', 'Water'], ['#8b5a2b', 'Openreach'], ['#f39c12', 'Fibre'],
+      ['#999999', 'Duct'], ['#d62728', 'Electric'], ['#8e44ad', 'CCTV view']
+    ].map(function (i) { return '<li><span class="swatch" style="border-color:' + i[0] + '"></span>' + i[1] + '</li>'; }).join('');
+    return '<ul class="tb-legend">' + items +
+      '<li><span class="swatch" style="border-color:#eceff1"></span>Surveyed (GPS / measured)</li>' +
+      '<li><span class="swatch dashed" style="border-color:#eceff1"></span>Approximate (traced from aerial)</li>' +
+      '<li><span class="swatch dotted" style="border-color:' + ASSUMED + '"></span>Assumed: needs surveying</li></ul>' +
+      '<div class="tb-sub">Fibre ends: <b>P</b> patch panel · <b>S</b> splice closure · <b>W</b> wall box · <b>C</b> cabinet · <b>B</b> pedestal · <b>O</b> ONT</div>' +
+      '<div class="tb-sub">Icons: 🧵 cable · ⭕ duct · 🕳️ chamber · 📦 box · 🔀 splices · 🧭 link · 📍 details</div>' +
+      '<div class="tb-sub">Positions are approximate unless surveyed; each popup says how accurate it is.</div>' +
+      '<div class="tb-sub">Last updated ' + UPDATED + '</div>';
+  }
+
+  function layersHtml() {
+    var base = '<div class="tb-h">Base map</div>' +
+      '<label class="tb-row"><input type="radio" name="tb-base" value="aerial"' + (map.hasLayer(aerial) ? ' checked' : '') + '> 🛰️ Aerial (Esri)</label>' +
+      '<label class="tb-row"><input type="radio" name="tb-base" value="osm"' + (map.hasLayer(osm) ? ' checked' : '') + '> 🗺️ Map (OpenStreetMap)</label>';
+    var ov = '<div class="tb-h">Layers</div>' + LAYERS.map(function (l) {
+      return '<label class="tb-row"><input type="checkbox" data-layer="' + l[0] + '"' + (map.hasLayer(groups[l[0]]) ? ' checked' : '') + '> ' + l[1] +
+        ' <span class="tb-count">' + (layerCounts[l[0]] || 0) + '</span></label>';
+    }).join('');
+    return base + ov;
+  }
+
+  function listHtml(kind) {
+    var F = window.FibreNet && window.FibreNet.lists ? window.FibreNet.lists() : null;
+    if (kind === 'chambers') {
+      var ch = Object.keys(featureById).filter(function (k) { var p = featureById[k].feature.properties || {}; return ['manhole', 'chamber', 'valve_box', 'draw_pit'].indexOf(p.type) >= 0; }).sort();
+      return ch.map(function (k) {
+        var p = featureById[k].feature.properties;
+        return '<a href="#feature=' + esc(k) + '" class="tb-item"><b>🕳️ ' + esc(k) + '</b> <span>' + esc(p.name || '') + '</span><span class="tb-meta">' + esc([p.owner, p.size_mm ? p.size_mm + ' mm' : ''].filter(Boolean).join(' · ')) + '</span></a>';
+      }).join('') || '<div class="tb-sub">No chambers yet.</div>';
     }
-  });
-  map.addControl(new Info());
+    if (!F) return '<div class="tb-sub">Loading…</div>';
+    if (kind === 'links') return F.circuits.map(function (c) {
+      return '<a href="#" class="tb-item" data-fx="trace" data-circuit="' + esc(c.id) + '"><b>🧭 ' + esc(c.name) + '</b></a>';
+    }).join('') || '<div class="tb-sub">No links recorded.</div>';
+    if (kind === 'cables') return F.cables.map(function (c) {
+      var l = lineById[c.id], t = l ? tier(l.feature.properties || {}) : 'none';
+      var badge = { surveyed: '<span class="tb-chip ok">surveyed</span>', approx: '<span class="tb-chip approx">approx</span>', assumed: '<span class="tb-chip assumed">assumed</span>', none: '<span class="tb-chip">not on map</span>' }[t];
+      return '<a href="#" class="tb-item" data-fx="cable" data-id="' + esc(c.id) + '"><b>🧵 ' + esc(c.id) + '</b> <span>' + esc(c.name) + '</span><span class="tb-meta">' + c.fibres + 'F ' + badge + '</span></a>';
+    }).join('');
+    if (kind === 'enclosures') return F.nodes.map(function (n) {
+      return '<div class="tb-item"><b>' + (n.documented ? '🔀' : '❓') + ' ' + esc(n.name) + '</b><span class="tb-meta">' +
+        (n.documented ? '<a href="#" data-fx="splice" data-node="' + esc(n.id) + '">splices</a>' : 'not documented') +
+        (featureById[n.id] ? ' · <a href="#feature=' + esc(n.id) + '">📍 on map</a>' : '') + '</span></div>';
+    }).join('');
+    return '';
+  }
+
+  var TB = [
+    ['layers', '🗂️', 'Layers'], ['links', '🧭', 'Links'], ['cables', '🧵', 'Cables'],
+    ['enclosures', '🔀', 'Enclosures'], ['chambers', '🕳️', 'Chambers'], ['legend', '🔑', 'Legend']
+  ];
+  var bar = L.DomUtil.create('div', 'tb', document.body);
+  bar.innerHTML = '<span class="tb-brand">Llwynygorras</span>' + TB.map(function (b) {
+    return '<button class="tb-btn" data-tb="' + b[0] + '" title="' + b[2] + '"><span class="tb-ic">' + b[1] + '</span><span class="tb-lbl">' + b[2] + '</span></button>';
+  }).join('');
+  var dd = L.DomUtil.create('div', 'tb-dd', document.body);
+  L.DomEvent.disableClickPropagation(bar); L.DomEvent.disableClickPropagation(dd);
+  L.DomEvent.disableScrollPropagation(dd);
+  var ddOpen = null;
+  function openDd(kind) {
+    if (ddOpen === kind) { closeDd(); return; }
+    ddOpen = kind;
+    var b = TB.filter(function (x) { return x[0] === kind; })[0];
+    var body = kind === 'legend' ? legendHtml() : kind === 'layers' ? layersHtml() : '<div class="tb-list">' + listHtml(kind) + '</div>';
+    dd.innerHTML = '<div class="tb-dd-head">' + b[1] + ' ' + b[2] + '<button class="tb-x" title="Close">&times;</button></div><div class="tb-dd-body">' + body + '</div>';
+    dd.classList.add('open');
+    Array.prototype.forEach.call(bar.querySelectorAll('.tb-btn'), function (x) { x.classList.toggle('on', x.getAttribute('data-tb') === kind); });
+    dd.querySelector('.tb-x').addEventListener('click', closeDd);
+    if (kind === 'layers') {
+      Array.prototype.forEach.call(dd.querySelectorAll('input[name="tb-base"]'), function (r) {
+        r.addEventListener('change', function () {
+          var on = r.value === 'aerial' ? aerial : osm, off = r.value === 'aerial' ? osm : aerial;
+          map.removeLayer(off); on.addTo(map);
+        });
+      });
+      Array.prototype.forEach.call(dd.querySelectorAll('input[data-layer]'), function (c) {
+        c.addEventListener('change', function () { var g = groups[c.getAttribute('data-layer')]; if (c.checked) g.addTo(map); else map.removeLayer(g); });
+      });
+    }
+  }
+  function closeDd() {
+    ddOpen = null; dd.classList.remove('open');
+    Array.prototype.forEach.call(bar.querySelectorAll('.tb-btn'), function (x) { x.classList.remove('on'); });
+  }
+  bar.addEventListener('click', function (e) { var b = e.target.closest('[data-tb]'); if (b) openDd(b.getAttribute('data-tb')); });
+  // Choosing something in a list closes the drop-down (the trace, cable view or popup then opens).
+  dd.addEventListener('click', function (e) { if (e.target.closest('.tb-item a, a.tb-item, .tb-item[data-fx]')) setTimeout(closeDd, 0); });
 })();
