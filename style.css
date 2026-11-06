@@ -153,3 +153,8 @@ body {
 .fxe.hl .sock { fill: #ffe0b2; stroke: #ff6d00; stroke-width: 1.5; }
 .fxe.hl .rowbg { fill: #fff3e0; }
 .fxe.hl text { font-weight: bold; }
+
+/* New version banner */
+.update-bar { position: fixed; z-index: 3000; top: 10px; left: 50%; transform: translateX(-50%); background: #263238; color: #fff;
+  padding: 8px 12px; border-radius: 8px; font: 13px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,.4); max-width: calc(100vw - 32px); }
+.update-bar button { margin-left: 8px; border: 0; border-radius: 5px; padding: 4px 10px; background: #4fc3f7; color: #00243a; font-weight: 600; cursor: pointer; }

@@ -233,6 +233,35 @@
   }
   window.addEventListener('hashchange', function () { Object.keys(featureById).forEach(function (k) { featureById[k]._fromHash = false; }); openFeatureFromHash(); });
 
+  // ---- New version check: poll version.json and offer a reload when the published site has changed ----
+  (function () {
+    var meta = document.querySelector('meta[name="map-version"]');
+    var mine = meta && meta.getAttribute('content');
+    if (!mine || mine === 'dev') return;   // local preview: nothing to compare against
+    var shown = false;
+    function check() {
+      if (shown) return;
+      fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (v) {
+          if (!v || !v.version || v.version === mine || shown) return;
+          shown = true;
+          var bar = document.createElement('div');
+          bar.className = 'update-bar';
+          bar.innerHTML = 'A new version of the map is available. <button>Reload</button>';
+          bar.querySelector('button').addEventListener('click', function () {
+            // A new query string makes the browser fetch a fresh page instead of its cached copy; keep the #view.
+            location.replace(location.pathname + '?v=' + encodeURIComponent(v.version) + location.hash);
+          });
+          document.body.appendChild(bar);
+        })
+        .catch(function () {});
+    }
+    setInterval(check, 120000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
+    setTimeout(check, 5000);
+  })();
+
   // ---- Photo viewer (lightbox) ----
   var viewer = null, vList = [], vI = 0;
   function showPhoto() {
