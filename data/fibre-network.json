@@ -7,7 +7,19 @@
       "fibres": 24,
       "tube_size": 12,
       "a": "SHED",
-      "b": "WOODS"
+      "b": "WOODS",
+      "route": [
+        "SHED",
+        "MH10",
+        "MH10-MH11/1",
+        "MH11",
+        "MH11-MH13/1",
+        "MH13",
+        "MH13-MH12/1",
+        "MH12",
+        "WOODS"
+      ],
+      "route_source": "Nat, 2026-11-06"
     },
     "F04": {
       "name": "Woods cabinet to 2 The Cottage",
@@ -80,8 +92,10 @@
   },
   "nodes": {
     "SHED": {
-      "name": "Shed",
-      "documented": false
+      "name": "Shed rack",
+      "documented": false,
+      "where": "Rack in the shed",
+      "notes": "F03 leaves MH10 into the shed rack, where all 24 cores are spliced to LC connectors on a 1U patch panel (Nat, 2026-11-06). Port numbers, and the patching to F08 (from the barn) and F02 (to the snug), are not yet recorded."
     },
     "WOODS": {
       "name": "Woods cabinet (1U splice tray enclosure)",
