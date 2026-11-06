@@ -970,6 +970,20 @@
       window.SiteMap.highlightIds([cid], true);
       window.FibreNet.cableOpened(cid);
     }
+    if (b.getAttribute('data-fx') === 'schem-net') showNetworkSchematic();
+    if (b.getAttribute('data-fx') === 'schem-cable') {
+      var sid = b.getAttribute('data-id'), sc0 = net.cables[sid];
+      window.SiteMap.highlightIds([sid], true);
+      showView('schem-cable:' + sid, '📐 ' + sid + ' route: ' + sc0.name, '<p class="fx-sub">' + sc0.fibres + ' fibres</p>' + cableSchematic(sid) +
+        '<p class="fx-note">Rounded blue boxes are enclosures and buildings; square grey boxes are chambers. Thick grey lines are ducts, thin lines direct runs; dashed means the route isn\'t recorded. Tap anything to open it.</p>');
+    }
+    if (b.getAttribute('data-fx') === 'schem-circuit') {
+      var sc1 = (net.circuits || []).filter(function (x) { return x.id === b.getAttribute('data-circuit'); })[0];
+      if (sc1) {
+        window.SiteMap.highlightIds(seqCables(traces[sc1.id]), true);
+        showView('schem-circuit:' + sc1.id, '📐 ' + sc1.name, '<p class="fx-sub">' + esc(circuitInfo(sc1)) + '</p>' + circuitSchematic(sc1.id));
+      }
+    }
     if (b.getAttribute('data-fx') === 'trace') {
       var c = (net.circuits || []).filter(function (x) { return x.id === b.getAttribute('data-circuit'); })[0];
       if (c) showTrace(c.name, traces[c.id], c.id);

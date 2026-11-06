@@ -614,6 +614,17 @@
       return rows.join('') || '<div class="tb-sub">No ducts yet.</div>';
     }
     if (!F) return '<div class="tb-sub">Loading…</div>';
+    if (kind === 'schematic') {
+      // All three schematic views: the whole duct network, each circuit, and each cable's route.
+      return '<div class="tb-h">Duct network</div>' +
+        '<a href="#" class="tb-item tb-line" data-fx="schem-net"><b>📐 Duct network</b><span class="tb-name">every chamber, enclosure and duct</span></a>' +
+        '<div class="tb-h">Circuits</div>' + F.circuits.map(function (c) {
+          return '<a href="#" class="tb-item tb-line" data-fx="schem-circuit" data-circuit="' + esc(c.id) + '"><b class="tb-name">🧭 ' + esc(c.name) + '</b><span class="tb-meta">' + esc(window.FibreCircuitInfo ? window.FibreCircuitInfo(c) : '') + '</span></a>';
+        }).join('') +
+        '<div class="tb-h">Cable routes</div>' + F.cables.map(function (c) {
+          return '<a href="#" class="tb-item tb-line" data-fx="schem-cable" data-id="' + esc(c.id) + '"><b>🧵 ' + esc(c.id) + '</b><span class="tb-name">' + esc(c.name) + '</span><span class="tb-meta">' + c.fibres + 'F</span></a>';
+        }).join('');
+    }
     if (kind === 'links') return F.circuits.map(function (c) {
       return '<a href="#" class="tb-item tb-line" data-fx="trace" data-circuit="' + esc(c.id) + '"><b class="tb-name">🧭 ' + esc(c.name) + '</b><span class="tb-meta">' + esc(window.FibreCircuitInfo ? window.FibreCircuitInfo(c) : '') + '</span></a>';
     }).join('') || '<div class="tb-sub">No circuits recorded.</div>';
@@ -711,7 +722,7 @@
       dd.style.left = Math.max(6, Math.min(window.innerWidth - w - 6, left)) + 'px';
     }
     // List menus get a filter box: type to narrow the list; arrows and Enter pick, Esc closes.
-    if (['links', 'cables', 'enclosures', 'chambers', 'ducts'].indexOf(kind) >= 0) {
+    if (['links', 'cables', 'enclosures', 'chambers', 'ducts', 'schematic'].indexOf(kind) >= 0) {
       var fb = document.createElement('input');
       fb.type = 'search'; fb.className = 'tb-filter'; fb.placeholder = 'Type to filter…'; fb.setAttribute('aria-label', 'Filter ' + b[2]);
       dd.querySelector('.tb-dd-body').insertBefore(fb, dd.querySelector('.tb-dd-body').firstChild);
@@ -760,7 +771,6 @@
     var b = e.target.closest('[data-tb]');
     if (!b) return;
     if (b.getAttribute('data-tb') === 'legend') setLegend(!leg.classList.contains('open'));
-    else if (b.getAttribute('data-tb') === 'schematic') { closeDd(); if (window.FibreNet) window.FibreNet.showNetworkSchematic(); }
     else openDd(b.getAttribute('data-tb'));
   });
   // Search: results update as you type; arrow keys move, Enter opens, Escape closes.
