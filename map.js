@@ -66,7 +66,8 @@
     if (layer === 'buildings') {
       s = { color: '#444', weight: 1.5, fillColor: '#888', fillOpacity: 0.45 };
     } else if (layer === 'fibre' && t === 'duct') {
-      s.color = '#999'; s.weight = 7; s.opacity = 0.7;
+      var nd = Array.isArray(p.ducts) ? p.ducts.length : 1;
+      s.color = '#999'; s.weight = 5 + 2 * Math.min(nd, 4); s.opacity = 0.7;
     } else if (layer === 'openreach') {
       if (t === 'overhead') s.weight = 2;
       if (t === 'fttp_drop') s.weight = 4;
@@ -199,6 +200,12 @@
     var rows = Object.keys(p).filter(function (k) { return k !== 'photos'; }).map(function (k) {
       var v = p[k];
       if (v === null || v === undefined) v = '';
+      if (k === 'ducts' && Array.isArray(v)) {
+        var dl = v.map(function (du, i) {
+          return (i + 1) + '. ' + esc(du.od_mm) + ' mm ' + esc([du.colour, du.type].filter(Boolean).join(' ')) + (du.cables ? ' · cables: ' + esc(du.cables) : '');
+        }).join('<br>');
+        return '<tr><th>ducts</th><td><b>' + v.length + (v.length === 1 ? ' duct' : ' ducts') + '</b><br>' + dl + '</td></tr>';
+      }
       if (typeof v === 'object') v = JSON.stringify(v);
       var cell = esc(v);
       if (k === 'doc' && v) {

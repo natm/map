@@ -4,6 +4,226 @@
     {
       "type": "Feature",
       "properties": {
+        "id": "MH06-MH07",
+        "name": "Duct route MH06 to MH07 (Junction to Front wall)",
+        "type": "duct",
+        "ducts": [{"od_mm": 63, "type": "twinwall", "colour": "black", "cables": ""}],
+        "notes": "Duct route between MH06 and MH07: 1 duct (63 mm black twinwall). Drawn straight between the two chambers; the real line may curve. Cables in it not yet recorded.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.06714, 51.938378],
+          [-5.066941, 51.938513]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH06-MH10",
+        "name": "Duct route MH06 to MH10 (Junction to Shed)",
+        "type": "duct",
+        "ducts": [{"od_mm": 63, "type": "twinwall", "colour": "black", "cables": ""}],
+        "notes": "Duct route between MH06 and MH10: 1 duct (63 mm black twinwall). Drawn straight between the two chambers; the real line may curve. Cables in it not yet recorded.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.06714, 51.938378],
+          [-5.067466, 51.938482]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH07-MH08",
+        "name": "Duct route MH07 to MH08 (Front wall to Behind wall)",
+        "type": "duct",
+        "ducts": [{"od_mm": 63, "type": "twinwall", "colour": "black", "cables": ""}],
+        "notes": "Duct route between MH07 and MH08: 1 duct (63 mm black twinwall). Drawn straight between the two chambers; the real line may curve. Cables in it not yet recorded.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.066941, 51.938513],
+          [-5.066631, 51.938726]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH08-MH09",
+        "name": "Duct route MH08 to MH09 (Behind wall to Greenhouse)",
+        "type": "duct",
+        "ducts": [{"od_mm": 63, "type": "twinwall", "colour": "black", "cables": ""}],
+        "notes": "Duct route between MH08 and MH09: 1 duct (63 mm black twinwall). Drawn straight between the two chambers; the real line may curve. Cables in it not yet recorded.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.066631, 51.938726],
+          [-5.066372, 51.938783]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH10-MH11",
+        "name": "Duct route MH10 to MH11 (Shed to Parking area)",
+        "type": "duct",
+        "ducts": [{"od_mm": 63, "type": "twinwall", "colour": "black", "cables": ""}],
+        "notes": "Duct route between MH10 and MH11: 1 duct (63 mm black twinwall). Drawn straight between the two chambers; the real line may curve. Cables in it not yet recorded.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.067466, 51.938482],
+          [-5.067595, 51.938539]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH11-MH13",
+        "name": "Duct route MH11 to MH13 (Parking area to Woods cabinet)",
+        "type": "duct",
+        "ducts": [{"od_mm": 63, "type": "twinwall", "colour": "black", "cables": ""}],
+        "notes": "Duct route between MH11 and MH13: 1 duct (63 mm black twinwall). Drawn straight between the two chambers; the real line may curve. Cables in it not yet recorded.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.067595, 51.938539],
+          [-5.068102, 51.938812]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH13-MH12",
+        "name": "Duct route MH13 to MH12 (Woods cabinet to Woods halfway)",
+        "type": "duct",
+        "ducts": [{"od_mm": 63, "type": "twinwall", "colour": "black", "cables": ""}],
+        "notes": "Duct route between MH13 and MH12: 1 duct (63 mm black twinwall). Drawn straight between the two chambers; the real line may curve. Cables in it not yet recorded.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.068102, 51.938812],
+          [-5.068357, 51.939017]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH13-MH14",
+        "name": "Duct route MH13 to MH14 (Woods cabinet to Neighbors field entrance)",
+        "type": "duct",
+        "ducts": [{"od_mm": 63, "type": "twinwall", "colour": "black", "cables": ""}],
+        "notes": "Duct route between MH13 and MH14: 1 duct (63 mm black twinwall). Drawn straight between the two chambers; the real line may curve. Cables in it not yet recorded.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.068102, 51.938812],
+          [-5.068291, 51.93853]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH14-MH15",
+        "name": "Duct route MH14 to MH15 (Neighbors field entrance to Cottage 2)",
+        "type": "duct",
+        "ducts": [{"od_mm": 63, "type": "twinwall", "colour": "black", "cables": ""}],
+        "notes": "Duct route between MH14 and MH15: 1 duct (63 mm black twinwall). Drawn straight between the two chambers; the real line may curve. Cables in it not yet recorded.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.068291, 51.93853],
+          [-5.067982, 51.938352]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH15-MH16",
+        "name": "Duct route MH15 to MH16 (Cottage 2 to Llwyn Dewi)",
+        "type": "duct",
+        "ducts": [{"od_mm": 63, "type": "twinwall", "colour": "black", "cables": ""}],
+        "notes": "Duct route between MH15 and MH16: 1 duct (63 mm black twinwall). Drawn straight between the two chambers; the real line may curve. Cables in it not yet recorded.",
+        "doc": "fibre.md#-ducts",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type",
+        "method": "description",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 3
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-5.067982, 51.938352],
+          [-5.068001, 51.938458]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
         "id": "F05",
         "name": "F05: 2 The Cottage to 1 The Cottage",
         "type": "cable",
