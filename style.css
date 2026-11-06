@@ -146,7 +146,6 @@ body {
 
 /* Splice diagram: hovering (or tapping) any part of a path highlights the whole path in the enclosure */
 .fxe { cursor: pointer; }
-.fx-svg.has-hl .fxe:not(.hl) { opacity: 0.22; }
 .fxe.hl .ln { stroke-width: 4.5; }
 .fxe.hl .vis { stroke: #ff6d00; stroke-width: 5; }
 .fxe.hl circle { fill: #ff6d00; }
