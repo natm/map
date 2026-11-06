@@ -157,7 +157,7 @@ body {
 .fxe.hl text { font-weight: bold; }
 
 /* New version banner */
-.update-bar { position: fixed; z-index: 3000; top: 10px; left: 50%; transform: translateX(-50%); background: #263238; color: #fff;
+.update-bar { position: fixed; z-index: 3000; top: 52px; left: 50%; transform: translateX(-50%); background: #263238; color: #fff;
   padding: 8px 12px; border-radius: 8px; font: 13px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,.4); max-width: calc(100vw - 32px); }
 .update-bar button { margin-left: 8px; border: 0; border-radius: 5px; padding: 4px 10px; background: #4fc3f7; color: #00243a; font-weight: 600; cursor: pointer; }
 .fx-svglink { fill: #0b5cad; cursor: pointer; text-decoration: underline; }
@@ -175,17 +175,17 @@ body {
 
 /* ===== Toolbar and drop-down panels (dark theme) ===== */
 :root { --ink: #eceff1; --panel: #1c2733; --panel2: #243241; --line: #33475a; --accent: #1e88e5; --accent2: #26a69a; }
-.leaflet-top.leaflet-left { top: 56px; }
-.tb { position: fixed; z-index: 1200; top: 10px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; box-shadow: 0 3px 14px rgba(0,0,0,.45);
-  max-width: calc(100vw - 20px); overflow-x: auto; scrollbar-width: none; font: 13px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.leaflet-top.leaflet-left { top: 46px; }
+.tb { position: fixed; z-index: 1200; top: 0; left: 0; right: 0; height: 44px; box-sizing: border-box; display: flex; align-items: center; gap: 6px;
+  background: var(--panel); border-bottom: 1px solid var(--line); padding: 0 8px; box-shadow: 0 2px 10px rgba(0,0,0,.4);
+  overflow-x: auto; scrollbar-width: none; font: 13px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .tb::-webkit-scrollbar { display: none; }
 .tb-brand { color: var(--ink); font-weight: 700; padding: 0 8px 0 4px; white-space: nowrap; letter-spacing: .02em; }
 .tb-btn { display: flex; align-items: center; gap: 5px; border: 0; border-radius: 7px; padding: 6px 10px; background: var(--accent); color: #fff;
   font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .tb-btn:hover { filter: brightness(1.1); }
 .tb-btn.on { background: #fff; color: #1c2733; }
-.tb-dd { position: fixed; z-index: 1150; top: 62px; left: 50%; transform: translateX(-50%); width: min(380px, calc(100vw - 20px)); max-height: calc(100vh - 90px);
+.tb-dd { position: fixed; z-index: 1150; top: 50px; left: 50%; transform: translateX(-50%); width: min(420px, calc(100vw - 20px)); max-height: calc(100vh - 70px);
   display: none; flex-direction: column; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 10px;
   box-shadow: 0 6px 22px rgba(0,0,0,.5); font: 13px/1.45 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .tb-dd.open { display: flex; }
@@ -218,7 +218,8 @@ a.tb-item:hover, .tb-item:hover { border-color: var(--accent); }
 .also-h, .tb-h { font-weight: 600; }
 .leaflet-popup-content-wrapper { border-radius: 10px; }
 @media (min-width: 701px) {
-  body.panel-open .tb, body.panel-open .tb-dd { left: calc((100vw - min(640px, 100vw)) / 2); }
+  body.panel-open .tb { right: min(640px, 100vw); }
+  body.panel-open .tb-dd { left: calc((100vw - min(640px, 100vw)) / 2); }
 }
 
 /* Compact one-line rows in the toolbar lists */
@@ -234,3 +235,45 @@ a.tb-item:hover, .tb-item:hover { border-color: var(--accent); }
   background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 22px rgba(0,0,0,.5);
   font: 13px/1.45 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
 .tb-legend-panel.open { display: flex; }
+
+/* Search box in the toolbar */
+.tb-search { flex: 0 1 220px; min-width: 90px; margin-left: auto; border: 1px solid var(--line); border-radius: 7px; background: var(--panel2); color: var(--ink);
+  padding: 6px 10px; font: 13px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; outline: none; }
+.tb-search:focus { border-color: var(--accent); }
+.tb-search::placeholder { color: #90a4ae; }
+.tb-item.tb-line.sel { border-color: var(--accent); background: #2b3d50; }
+.tb-kind { color: #90a4ae; font-size: 11px; }
+@media (max-width: 700px) { .tb-search { flex: 1 1 80px; font-size: 16px; padding: 5px 8px; } }
+
+/* ===== Dark windows, panels and details (Nat, 2026-11-06) =====
+   Everything that opens from the map is a dark window. Splice diagrams stay on a light card,
+   because fibre colours (white, yellow) and their labels are drawn for a light background. */
+.fx-win, .fx-panel { background: var(--panel); color: var(--ink); border: 1px solid var(--line); color-scheme: dark; }
+.fx-win.small { width: min(380px, 90vw); height: auto; max-height: 75vh; }
+.fx-win.big { width: min(560px, 90vw); height: min(560px, 80vh); }
+.fx-win:not(.small):not(.big) { width: min(460px, 90vw); height: min(600px, 80vh); }
+.fx-win-body a, .fx-body a, .fx-nname a, .fx-clabel a, .fx-through a { color: #90caf9; }
+.fx-note, .fx-sub, .also-h, .also-type, .fx-join, .fx-end { color: #9fb3c0; }
+.fx-end.unknown { color: #ffb74d; }
+.fx-close { color: #b0bec5; }
+.fx-head { border-bottom-color: var(--line); }
+.fx-btn { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); }
+.fx-btn:hover { background: #2b3d50; border-color: var(--accent); }
+.fx-node { background: var(--panel2); border-color: var(--line); }
+.fx-item { background: #16202a; border-color: var(--line); }
+.fx-item.port { border-left-color: #78909c; }
+.fx-item.dev { border-left-color: #7986cb; }
+.also { background: var(--panel2); border-color: var(--line); }
+.props th { color: #90a4ae; }
+.thumb { border-color: var(--line); }
+.fx-table th, .fx-table td { border-bottom-color: var(--line); }
+.fx-table tr.spare td { color: #78909c; }
+.fx-route li.duct { color: #ce93d8; }
+.fx-route li.duct::marker, .fx-route li.chamber::marker { color: #78909c; }
+.acc-ok { background: #16301d; border-color: #66bb6a; color: #a5d6a7; }
+.acc-approx { background: #33290e; border-color: #ffb300; color: #ffd54f; }
+.acc-assumed { background: #321a38; border-color: #e040fb; color: #ea80fc; }
+.fx-scroll:has(.fx-svg) { background: #fff; border-radius: 6px; padding: 4px; color-scheme: light; }
+.fx-details { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 6px; }
+.fx-details summary { cursor: pointer; color: #90a4ae; font-size: 12px; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel); color: var(--ink); }

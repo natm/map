@@ -196,7 +196,7 @@
     }).join('') + '</div>';
   }
 
-  function popupHtml(p, latlng, isLine) {
+  function popupHtml(p, latlng, isLine, noTitle) {
     var pics = thumbsHtml(p);
     var rows = Object.keys(p).filter(function (k) { return k !== 'photos'; }).map(function (k) {
       var v = p[k];
@@ -218,9 +218,27 @@
       return '<tr><th>' + esc(k) + '</th><td>' + cell + '</td></tr>';
     });
     var tic = window.FibreIcons && p.id ? window.FibreIcons.iconFor(p.id) : '';
-    var title = p.name ? '<strong>' + (tic ? tic + ' ' : '') + esc(p.name) + '</strong>' : '';
+    var title = p.name && !noTitle ? '<strong>' + (tic ? tic + ' ' : '') + esc(p.name) + '</strong>' : '';
     var extras = window.FibreNet ? window.FibreNet.popupExtras(p) : '';
     return title + accuracyBadge(p, isLine) + pics + extras + alsoHere(p, latlng) + '<table class="props">' + rows.join('') + '</table>';
+  }
+
+  // ---- Feature windows: clicking anything opens its details in a window that stays open (fibre.js FxWin) ----
+  function openFeatureWin(layer) {
+    var f = layer.feature || {}, p = f.properties || {}, gt = f.geometry && f.geometry.type;
+    var isLine = gt === 'LineString' || gt === 'MultiLineString';
+    if (isLine) { clearHighlight(); highlightLine(layer); }
+    else if (p.cables) {
+      clearHighlight();
+      String(p.cables).split(/[,\s]+/).forEach(function (id) { if (lineById[id]) highlightLine(lineById[id]); });
+    }
+    // A fibre cable in the fibre model opens its cable view (which includes these details).
+    if (isLine && p.id && window.FibreNet && window.FibreNet.hasCable && window.FibreNet.hasCable(p.id)) { window.FibreNet.cableOpened(p.id); return; }
+    if (!window.FxWin) return;
+    var ll = layer.getLatLng ? layer.getLatLng() : null;
+    var tic = window.FibreIcons && p.id ? window.FibreIcons.iconFor(p.id) : '';
+    var render = function () { return popupHtml(p, ll, isLine, true); };
+    window.FxWin.show('feature:' + (p.id || L.stamp(layer)), (tic ? tic + ' ' : '📍 ') + (p.name || p.id || 'Details'), render(), { render: render, cls: 'small' });
   }
 
   // ---- #feature=<id>: open that item's popup (shareable links) ----
@@ -231,7 +249,7 @@
     l._fromHash = true;
     var ll = l.getLatLng ? l.getLatLng() : l.getBounds().getCenter();
     map.setView(ll, Math.max(map.getZoom(), 19));
-    l.openPopup(ll);
+    openFeatureWin(l);
   }
   window.addEventListener('hashchange', function () { Object.keys(featureById).forEach(function (k) { featureById[k]._fromHash = false; }); openFeatureFromHash(); });
 
@@ -339,14 +357,17 @@
     });
   }
 
-  // Keep the highlight while a fibre diagram panel is open.
-  map.on('popupclose', function () { if (!(window.FibreNet && window.FibreNet.isOpen())) clearHighlight(); });
 
   // API for fibre.js (splice and trace diagrams).
   window.SiteMap = {
     map: map,
     clearHighlight: clearHighlight,
-    closePopup: function () { map.closePopup(); },
+    closePopup: function () {},
+    // A cable's map properties, folded away under its cable view.
+    lineDetails: function (id) {
+      var l = lineById[id];
+      return l ? '<details class="fx-details"><summary>Map details</summary>' + popupHtml(l.feature.properties || {}, null, true, true) + '</details>' : '';
+    },
     hasFeature: function (id) { return !!featureById[id]; },
     // Duct routes (IDs '<end>-<end>') that start or finish at this chamber or structure.
     ductRoutesAt: function (id) {
@@ -436,10 +457,10 @@
       if (!l) return false;
       var ll = l.getLatLng ? l.getLatLng() : l.getBounds().getCenter();
       map.setView(ll, Math.max(map.getZoom(), 19));
-      l.openPopup(ll);
+      openFeatureWin(l);
       return true;
     },
-    refreshPopup: function () { var pp = map._popup; if (pp && map.hasLayer(pp)) pp.update(); },
+    refreshPopup: function () { if (window.FxWin) window.FxWin.refresh(); },
     highlightIds: function (ids, fit) {
       clearHighlight();
       var b = null;
@@ -467,24 +488,9 @@
             var p = f.properties || {};
             if (p.id) featureById[p.id] = layer;
             if (layer.getLatLng) points.push({ p: p, latlng: layer.getLatLng() });
-            layer.bindPopup(function () {
-              var gt = f.geometry && f.geometry.type;
-              return popupHtml(p, layer.getLatLng ? layer.getLatLng() : null, gt === 'LineString' || gt === 'MultiLineString');
-            }, { maxWidth: 320, minWidth: 50, maxHeight: Math.max(220, Math.round(window.innerHeight * 0.55)), autoPanPadding: [20, 20] });
+            layer.on('click', function (e) { L.DomEvent.stop(e); openFeatureWin(layer); });
             var gt = f.geometry && f.geometry.type;
-            if (gt === 'LineString' || gt === 'MultiLineString') {
-              if (p.id) lineById[p.id] = layer;
-              layer.on('popupopen', function () {
-                clearHighlight(); highlightLine(layer);
-                if (name === 'fibre' && window.FibreNet) window.FibreNet.cableOpened(p.id);
-              });
-            } else if (p.cables) {
-              // A junction: highlight every cable that ends or is spliced here.
-              layer.on('popupopen', function () {
-                clearHighlight();
-                String(p.cables).split(/[,\s]+/).forEach(function (id) { if (lineById[id]) highlightLine(lineById[id]); });
-              });
-            }
+            if ((gt === 'LineString' || gt === 'MultiLineString') && p.id) lineById[p.id] = layer;
           }
         };
   }
@@ -603,6 +609,55 @@
     return '';
   }
 
+  // ---- Search: finds any asset (map features, ducts, cables, enclosures, circuits) by id, name or type ----
+  var CHAMBER_TYPES = ['manhole', 'chamber', 'valve_box', 'draw_pit'];
+  function featureIcon(p) {
+    var t = p.type || '';
+    if (t === 'cable') return '🧵';
+    if (t === 'duct' || t === 'twinwall') return '⭕';
+    if (CHAMBER_TYPES.indexOf(t) >= 0) return '🕳️';
+    if (t === 'building') return '🏠';
+    if (t === 'patch_point' || t === 'splice' || p.enclosure) return '📦';
+    return '📍';
+  }
+  function searchIndex() {
+    var out = [], seen = {};
+    function add(r) { if (seen[r.key]) return; seen[r.key] = 1; r.text = (r.id + ' ' + r.name + ' ' + r.kind + ' ' + (r.extra || '')).toLowerCase(); out.push(r); }
+    var F = window.FibreNet && window.FibreNet.lists ? window.FibreNet.lists() : null;
+    if (F) {
+      F.cables.forEach(function (c) { add({ key: c.id, id: c.id, name: c.name, kind: 'cable', icon: '🧵', meta: c.fibres + 'F', act: 'data-fx="cable" data-id="' + esc(c.id) + '"' }); });
+      F.circuits.forEach(function (c) { add({ key: 'circuit:' + c.id, id: '', name: c.name, kind: 'circuit', icon: '🧭', act: 'data-fx="trace" data-circuit="' + esc(c.id) + '"' }); });
+    }
+    Object.keys(featureById).forEach(function (k) {
+      var p = featureById[k].feature.properties || {};
+      var node = F && F.nodes.filter(function (n) { return n.id === k; })[0];
+      add({ key: k, id: k, name: p.name || (node && node.name) || '', kind: node ? 'enclosure' : (p.type || 'feature').replace(/_/g, ' '),
+        icon: featureIcon(p), extra: [p.owner, p.notes, p.description].filter(Boolean).join(' '), act: 'data-fx="feature" data-id="' + esc(k) + '"' });
+      (p.ducts || []).forEach(function (d) {
+        add({ key: d.id, id: d.id, name: (d.od_mm ? d.od_mm + ' mm ' : '') + [d.colour, d.type].filter(Boolean).join(' '), kind: 'duct', icon: '⭕', act: 'data-fx="feature" data-id="' + esc(d.id) + '"' });
+      });
+    });
+    if (F) F.nodes.forEach(function (n) {
+      if (featureById[n.id]) return;
+      add({ key: n.id, id: '', name: n.name, kind: 'enclosure', icon: n.documented ? '🔀' : '❓', meta: n.documented ? '' : 'not on map',
+        act: n.documented ? 'data-fx="splice" data-node="' + esc(n.id) + '"' : '' });
+    });
+    return out;
+  }
+  function searchHtml(q) {
+    q = q.trim().toLowerCase();
+    if (!q) return '<div class="tb-sub">Type an id, name or type, e.g. MH12, F04, duct, cottage.</div>';
+    var words = q.split(/\s+/);
+    var hits = searchIndex().filter(function (r) { return words.every(function (w) { return r.text.indexOf(w) >= 0; }); });
+    function rank(r) { var id = r.id.toLowerCase(); return id === q ? 0 : id.indexOf(q) === 0 ? 1 : id.indexOf(q) >= 0 ? 2 : r.name.toLowerCase().indexOf(q) >= 0 ? 3 : 4; }
+    hits.sort(function (a, b) { return rank(a) - rank(b) || a.id.localeCompare(b.id, undefined, { numeric: true }) || a.name.localeCompare(b.name); });
+    if (!hits.length) return '<div class="tb-sub">Nothing matches “' + esc(q) + '”.</div>';
+    return '<div class="tb-list">' + hits.slice(0, 60).map(function (r) {
+      var inner = '<b>' + r.icon + (r.id ? ' ' + esc(r.id) : '') + '</b><span class="tb-name">' + esc(r.name) + '</span><span class="tb-meta tb-kind">' + esc(r.meta ? r.meta + ' · ' + r.kind : r.kind) + '</span>';
+      return r.act ? '<a href="#" class="tb-item tb-line" ' + r.act + '>' + inner + '</a>' : '<div class="tb-item tb-line">' + inner + '</div>';
+    }).join('') + '</div>' + (hits.length > 60 ? '<div class="tb-sub">' + (hits.length - 60) + ' more; keep typing to narrow it down.</div>' : '');
+  }
+
   var TB = [
     ['layers', '🗂️', 'Layers'], ['links', '🧭', 'Circuits'], ['cables', '🧵', 'Cables'],
     ['enclosures', '🔀', 'Enclosures'], ['chambers', '🕳️', 'Chambers'], ['legend', '🔑', 'Legend']
@@ -610,7 +665,7 @@
   var bar = L.DomUtil.create('div', 'tb', document.body);
   bar.innerHTML = '<span class="tb-brand">Llwynygorras</span>' + TB.map(function (b) {
     return '<button class="tb-btn" data-tb="' + b[0] + '" title="' + b[2] + '"><span class="tb-ic">' + b[1] + '</span><span class="tb-lbl">' + b[2] + '</span></button>';
-  }).join('');
+  }).join('') + '<input type="search" class="tb-search" placeholder="🔍 Search assets" aria-label="Search assets" autocomplete="off" spellcheck="false">';
   var dd = L.DomUtil.create('div', 'tb-dd', document.body);
   L.DomEvent.disableClickPropagation(bar); L.DomEvent.disableClickPropagation(dd);
   L.DomEvent.disableScrollPropagation(dd);
@@ -618,8 +673,8 @@
   function openDd(kind) {
     if (ddOpen === kind) { closeDd(); return; }
     ddOpen = kind;
-    var b = TB.filter(function (x) { return x[0] === kind; })[0];
-    var body = kind === 'legend' ? legendHtml() : kind === 'layers' ? layersHtml() : '<div class="tb-list">' + listHtml(kind) + '</div>';
+    var b = kind === 'search' ? ['search', '🔍', 'Search'] : TB.filter(function (x) { return x[0] === kind; })[0];
+    var body = kind === 'search' ? searchHtml(sbox.value) : kind === 'legend' ? legendHtml() : kind === 'layers' ? layersHtml() : '<div class="tb-list">' + listHtml(kind) + '</div>';
     dd.innerHTML = '<div class="tb-dd-head">' + b[1] + ' ' + b[2] + '<button class="tb-x" title="Close">&times;</button></div><div class="tb-dd-body">' + body + '</div>';
     dd.classList.add('open');
     Array.prototype.forEach.call(bar.querySelectorAll('.tb-btn'), function (x) { if (x.getAttribute('data-tb') !== 'legend') x.classList.toggle('on', x.getAttribute('data-tb') === kind); });
@@ -656,6 +711,25 @@
     if (!b) return;
     if (b.getAttribute('data-tb') === 'legend') setLegend(!leg.classList.contains('open'));
     else openDd(b.getAttribute('data-tb'));
+  });
+  // Search: results update as you type; arrow keys move, Enter opens, Escape closes.
+  var sbox = bar.querySelector('.tb-search'), sSel = 0;
+  function showSearch() {
+    ddOpen = null; openDd('search'); sSel = 0; markSel();
+  }
+  function markSel() {
+    var rows = dd.querySelectorAll('.tb-list > a.tb-item');
+    Array.prototype.forEach.call(rows, function (r, i) { r.classList.toggle('sel', i === sSel); });
+    if (rows[sSel]) rows[sSel].scrollIntoView({ block: 'nearest' });
+  }
+  sbox.addEventListener('input', showSearch);
+  sbox.addEventListener('focus', function () { if (ddOpen !== 'search') showSearch(); });
+  sbox.addEventListener('keydown', function (e) {
+    var rows = dd.querySelectorAll('.tb-list > a.tb-item');
+    if (e.key === 'ArrowDown') { sSel = Math.min(rows.length - 1, sSel + 1); markSel(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { sSel = Math.max(0, sSel - 1); markSel(); e.preventDefault(); }
+    else if (e.key === 'Enter') { if (rows[sSel]) { rows[sSel].click(); sbox.blur(); } e.preventDefault(); }
+    else if (e.key === 'Escape') { closeDd(); sbox.blur(); }
   });
   // Choosing something in a list closes the drop-down (the trace, cable view or popup then opens).
   dd.addEventListener('click', function (e) { if (e.target.closest('.tb-item a, a.tb-item, .tb-item[data-fx]')) setTimeout(closeDd, 0); });

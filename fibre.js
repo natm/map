@@ -272,11 +272,10 @@
     return '<div class="fx-trace">' + html + '</div>';
   }
 
-  function showTrace(name, seq) {
-    window.SiteMap.closePopup();
+  function showTrace(name, seq, cid) {
     var showRoutes = false;
     try { showRoutes = localStorage.getItem('fx-show-routes') === '1'; } catch (e) {}
-    openPanel(ICON.trace + ' ' + name, '<label class="fx-toggle"><input type="checkbox" class="fx-routes-toggle"' + (showRoutes ? ' checked' : '') + '> Show chambers and ducts along each cable</label>' +
+    var body = showView('trace:' + (cid || name), ICON.trace + ' ' + name, '<label class="fx-toggle"><input type="checkbox" class="fx-routes-toggle"' + (showRoutes ? ' checked' : '') + '> Show chambers and ducts along each cable</label>' +
       '<div class="fx-trace-wrap' + (showRoutes ? ' show-routes' : '') + '">' + traceHtml(seq) + '</div>' +
       '<p class="fx-note">Cables on this path are highlighted on the map. Dashed joints are assumed, not checked on site.</p>');
     var cb = body.querySelector('.fx-routes-toggle');
@@ -527,7 +526,8 @@
   }
   function wirePatchHover(container) {
     var svg = container && container.querySelector('.fx-svg');
-    if (!svg) return;
+    if (!svg || svg._wired) return;
+    svg._wired = true;
     Array.prototype.forEach.call(svg.querySelectorAll('.fxe'), function (g) {
       g.addEventListener('mouseenter', function () { if (hlLocked === null) markAll(g.getAttribute('data-c')); });
       g.addEventListener('mouseleave', function () { if (hlLocked === null) markAll(null); });
@@ -544,22 +544,27 @@
   // ---- Floating windows for splice diagrams (wide screens): one per enclosure, draggable, resizable, stay open ----
   var wins = {}, zTop = 1100, winCount = 0;
   function frontWin(w) { w.style.zIndex = ++zTop; }
-  function openWin(id, title, html) {
+  function openWin(id, title, html, opt) {
+    opt = opt || {};
     if (wins[id]) {
-      frontWin(wins[id]);
-      wins[id].classList.remove('flash'); void wins[id].offsetWidth; wins[id].classList.add('flash');
-      return wins[id];
+      var ow = wins[id];
+      if (opt.update) { ow.querySelector('.fx-win-title').textContent = title; ow.querySelector('.fx-win-body').innerHTML = html; }
+      if (opt.render) ow._render = opt.render;
+      frontWin(ow);
+      ow.classList.remove('flash'); void ow.offsetWidth; ow.classList.add('flash');
+      return ow;
     }
     var w = document.createElement('div');
-    w.className = 'fx-win';
+    w.className = 'fx-win' + (opt.cls ? ' ' + opt.cls : '');
+    if (opt.render) w._render = opt.render;
     w.innerHTML = '<div class="fx-win-head"><span class="fx-win-title"></span><button class="fx-close" title="Close">&times;</button></div><div class="fx-win-body"></div>';
     w.querySelector('.fx-win-title').textContent = title;
     w.querySelector('.fx-win-body').innerHTML = html;
     // Place new windows side by side from the right, then cascade down.
-    var n = winCount++ % 6, cols = Math.max(1, Math.floor((window.innerWidth - 60) / 570));
-    w.style.left = Math.max(10, window.innerWidth - 580 - (n % cols) * 570) + 'px';
-    w.style.top = (60 + Math.floor(n / cols) * 40) + 'px';
     document.body.appendChild(w);
+    var ww = w.offsetWidth, n = winCount++ % 6, cols = Math.max(1, Math.floor((window.innerWidth - 60) / (ww + 10)));
+    w.style.left = Math.max(10, window.innerWidth - ww - 20 - (n % cols) * (ww + 10)) + 'px';
+    w.style.top = (54 + Math.floor(n / cols) * 40) + 'px';
     frontWin(w);
     wins[id] = w;
     L.DomEvent.disableClickPropagation(w);
@@ -569,6 +574,7 @@
       w.parentNode.removeChild(w); delete wins[id];
       if (!Object.keys(wins).length && !(panel && panel.classList.contains('open'))) window.SiteMap.clearHighlight();
     });
+    w.addEventListener('keydown', function (e) { if (e.key === 'Escape') w.querySelector('.fx-close').click(); });
     // Drag by the title bar.
     var head = w.querySelector('.fx-win-head');
     head.addEventListener('pointerdown', function (e) {
@@ -586,9 +592,22 @@
     return w;
   }
 
+  // Every view (feature details, cables, circuits, splices) opens in a window that stays open until closed:
+  // floating, draggable and resizable on wide screens; the bottom panel on phones.
+  function showView(key, t, html, opt) {
+    if (window.innerWidth > 700) return openWin(key, t, html, L.extend({ update: true }, opt || {})).querySelector('.fx-win-body');
+    openPanel(t, html);
+    if (opt && opt.render) panel._render = opt.render; else if (panel) panel._render = null;
+    return body;
+  }
+  function refreshViews() {
+    Object.keys(wins).forEach(function (k) { var w = wins[k]; if (w._render) w.querySelector('.fx-win-body').innerHTML = w._render(); });
+    if (panel && panel.classList.contains('open') && panel._render) body.innerHTML = panel._render();
+  }
+  window.FxWin = { show: showView, refresh: refreshViews };
+
   function showSplices(nid) {
     var node = net.nodes[nid];
-    window.SiteMap.closePopup();
     var html;
     if (!node.documented) {
       html = '<p class="fx-note">❓ What happens inside ' + esc(node.name || nid) + ' isn\'t documented yet.' + (node.notes ? ' ' + esc(node.notes) : '') + '</p>';
@@ -613,13 +632,8 @@
     html = '<div class="fx-btns" style="margin:0 0 8px">' + jump + '</div>' + html;
     var cs = circuitsAt(nid);
     if (cs.length) html += '<div class="fx-btns"><div class="fx-sub">Trace a link through here:</div>' + traceButtons(cs) + '</div>';
-    if (window.innerWidth > 700) {
-      var w = openWin(nid, ICON.splice + ' Splices: ' + (node.name || nid), html);
-      wirePatchHover(w);
-    } else {
-      openPanel(ICON.splice + ' Splices: ' + (node.name || nid), html);
-      wirePatchHover(body);
-    }
+    var sb = showView('splice:' + nid, ICON.splice + ' Splices: ' + (node.name || nid), html, { cls: 'big', update: false });
+    wirePatchHover(sb.parentNode);
     var ids = Object.keys(net.cables).filter(function (id) { return net.cables[id].a === nid || net.cables[id].b === nid; });
     window.SiteMap.highlightIds(ids, false);
   }
@@ -704,10 +718,12 @@
           .sort(function (a, b) { return (b.documented - a.documented) || a.name.localeCompare(b.name); })
       };
     },
+    hasCable: function (id) { return !!(net && net.cables[id]); },
     isOpen: function () { return !!(panel && panel.classList.contains('open')) || Object.keys(wins).length > 0; },
     cableOpened: function (id) {
       if (!net || !net.cables[id]) return;
-      openPanel(ICON.cable + ' Cable ' + id + ': ' + net.cables[id].name, cableHtml(id));
+      var extra = window.SiteMap.lineDetails ? window.SiteMap.lineDetails(id) : '';
+      showView('cable:' + id, ICON.cable + ' Cable ' + id + ': ' + net.cables[id].name, cableHtml(id) + extra, { cls: 'big' });
     },
     popupExtras: function (p) {
       if (!net || !p || !p.id) return '';
@@ -760,7 +776,7 @@
     if (!b || !net) return;
     ev.preventDefault();
     if (b.getAttribute('data-fx') === 'splice') showSplices(b.getAttribute('data-node'));
-    if (b.getAttribute('data-fx') === 'feature') { closePanel(); window.SiteMap.openFeature(b.getAttribute('data-id')); }
+    if (b.getAttribute('data-fx') === 'feature') window.SiteMap.openFeature(b.getAttribute('data-id'));
     if (b.getAttribute('data-fx') === 'cable') {
       var cid = b.getAttribute('data-id');
       window.SiteMap.highlightIds([cid], true);
@@ -768,13 +784,13 @@
     }
     if (b.getAttribute('data-fx') === 'trace') {
       var c = (net.circuits || []).filter(function (x) { return x.id === b.getAttribute('data-circuit'); })[0];
-      if (c) showTrace(c.name, traces[c.id]);
+      if (c) showTrace(c.name, traces[c.id], c.id);
     }
   });
 
   fetch('data/fibre-network.json', { cache: 'no-cache' })
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function (d) { net = d; build(); drawAssumed(); window.SiteMap.refreshPopup(); })
+    .then(function (d) { net = d; build(); drawAssumed(); refreshViews(); })
     .catch(function (e) { console.warn('Could not load the fibre network: ' + e); });
 
   // Deep links: #splice=C2-ENC, #trace=tdr, #cable=F05 (shareable, and used for tests).
@@ -782,7 +798,7 @@
     var m = /^#(splice|trace|cable)=([\w-]+)$/.exec(location.hash || '');
     if (!m) return;
     if (m[1] === 'splice' && net.nodes[m[2]]) showSplices(m[2]);
-    if (m[1] === 'trace' && traces[m[2]]) showTrace((net.circuits.filter(function (c) { return c.id === m[2]; })[0] || {}).name, traces[m[2]]);
+    if (m[1] === 'trace' && traces[m[2]]) showTrace((net.circuits.filter(function (c) { return c.id === m[2]; })[0] || {}).name, traces[m[2]], m[2]);
     if (m[1] === 'cable' && net.cables[m[2]]) { window.SiteMap.highlightIds([m[2]], true); window.FibreNet.cableOpened(m[2]); }
   }
   window.addEventListener('hashchange', openFromHash);
