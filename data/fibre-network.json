@@ -3,14 +3,14 @@
   "updated": "2026-11-05",
   "cables": {
     "F03": {
-      "name": "Shed to woods pole",
+      "name": "Shed to the woods cabinet",
       "fibres": 24,
       "tube_size": 12,
       "a": "SHED",
       "b": "WOODS"
     },
     "F04": {
-      "name": "Woods pole to 2 The Cottage",
+      "name": "Woods cabinet to 2 The Cottage",
       "fibres": 8,
       "a": "WOODS",
       "b": "C2-ENC",
@@ -86,8 +86,36 @@
     "WOODS": {
       "name": "Woods cabinet (1U splice tray enclosure)",
       "where": "1U splice tray enclosure in a cabinet next to MH12 in the woods (\"pole in woods\" on the 2 The Cottage label)",
-      "documented": false,
-      "notes": "F04 arrives here from MH12 through duct MH13-MH12. All 8 F04 fibres are spliced here, presumably to F03 fibres; which ones is not yet known."
+      "documented": true,
+      "notes": "F04's 8 fibres are spliced in order to LC ports 1–8 of the 1U enclosure (Nat). How those ports are patched or spliced to F03 (from the shed) is not yet recorded; the enclosure may have more than 8 ports.",
+      "patching_documented": false,
+      "layout": {
+        "left": [
+          "F03"
+        ],
+        "right": [
+          "F04"
+        ]
+      },
+      "panels": [
+        {
+          "id": "P",
+          "name": "1U splice tray enclosure, LC (port count ❓)",
+          "ports": 8,
+          "connector": "LC/UPC",
+          "labels": {
+            "1-8": "F04 to 2 The Cottage"
+          }
+        }
+      ],
+      "joints": [
+        {
+          "kind": "splice",
+          "a": "F04:1-8",
+          "b": "P:1-8",
+          "note": "Strand n on LC n (Nat, 2026-11-06)"
+        }
+      ]
     },
     "C2-ENC": {
       "name": "2 The Cottage enclosure",
@@ -132,8 +160,7 @@
           "kind": "splice",
           "a": "F04:1-8",
           "b": "P:1-8",
-          "note": "Strand-to-port order assumed (strand n on port n)",
-          "assumed": true
+          "note": "Strand n on LC n (Nat, 2026-11-06)"
         },
         {
           "kind": "splice",

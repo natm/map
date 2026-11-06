@@ -181,7 +181,9 @@
     var p = parseKey(k), node = net.nodes[p.node] || {};
     if (p.t === 'C') return node.documented ? '<div class="fx-end">Fibre not joined to anything here (spare)</div>'
       : '<div class="fx-end unknown">❓ ' + esc(node.name || p.node) + ' isn\'t documented yet, so the trace stops here</div>';
-    if (p.t === 'T') return '<div class="fx-end">Port not patched</div>';
+    if (p.t === 'T') return node.patching_documented === false
+      ? '<div class="fx-end unknown">❓ Patching at ' + esc(node.name || p.node) + ' isn\'t recorded yet, so the trace stops here</div>'
+      : '<div class="fx-end">Port not patched</div>';
     if (p.t === 'R') return '<div class="fx-end">Nothing spliced to this port</div>';
     return '<div class="fx-end">' + (atStart ? 'Starts' : 'Ends') + ' at this device</div>';
   }
