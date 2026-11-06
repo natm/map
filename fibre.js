@@ -619,6 +619,26 @@
     popupExtras: function (p) {
       if (!net || !p || !p.id) return '';
       var html = '';
+      // Duct routes: the chambers at each end, the cables in each duct, and the links carried.
+      if (p.type === 'duct') {
+        var ends = String(p.id).split('-');
+        var endLinks = ends.map(function (e2) {
+          return window.SiteMap.hasFeature(e2) ? '<a href="#feature=' + esc(e2) + '">' + esc(e2) + '</a>' + ((window.SiteMap.featureInfo(e2) || {}).name ? ' <span class="fx-sub">' + esc(window.SiteMap.featureInfo(e2).name) + '</span>' : '') : esc(e2);
+        }).join(' ↔ ');
+        var allCables = [];
+        var ductRows = (p.ducts || []).map(function (du) {
+          var cs = Object.keys(net.cables).filter(function (id) { return (net.cables[id].route || []).indexOf(du.id) >= 0; });
+          cs.forEach(function (c2) { if (allCables.indexOf(c2) < 0) allCables.push(c2); });
+          return '<li><b>' + esc(du.id) + '</b> <span class="fx-sub">' + esc(du.od_mm) + ' mm ' + esc([du.colour, du.type].filter(Boolean).join(' ')) + '</span>: ' +
+            (cs.length ? cs.map(function (c2) { return '<a href="#" data-fx="cable" data-id="' + esc(c2) + '"><b>' + esc(c2) + '</b></a> <span class="fx-sub">' + net.cables[c2].fibres + 'F</span>'; }).join(', ') : '<span class="fx-sub">no cables recorded</span>') + '</li>';
+        }).join('');
+        var links = [];
+        allCables.forEach(function (c2) { circuitsOn(c2).forEach(function (ci) { if (links.indexOf(ci) < 0) links.push(ci); }); });
+        html += '<div class="also"><div class="also-h">Ends</div><div style="font-size:12px">' + endLinks + '</div>' +
+          '<div class="also-h" style="margin-top:4px">Ducts and cables</div><ul class="fx-through">' + ductRows + '</ul>' +
+          (links.length ? '<div class="also-h" style="margin-top:4px">Links through it</div>' + traceButtons(links) : '') + '</div>';
+        return html;
+      }
       // Chambers and structures: the cables routed through them, and the ducts in and out.
       var through = Object.keys(net.cables).filter(function (id) { return (net.cables[id].route || []).indexOf(p.id) >= 0; });
       var dr = p.type === 'duct' ? [] : window.SiteMap.ductRoutesAt(p.id);
