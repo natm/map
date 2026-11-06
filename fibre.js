@@ -32,6 +32,7 @@
   var net = null;
   var adj = {};
   var traces = {};   // circuit id -> sequence
+  var gpath = {};    // graph key -> global path id
 
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -98,6 +99,19 @@
       });
     });
     (net.circuits || []).forEach(function (c) { traces[c.id] = trace(startKey(c.start)); });
+    // Global path ids: everything joined by splices, patches, ports and cable fibres. Used to highlight one optical
+    // path across every open splice diagram.
+    var g = 0;
+    Object.keys(adj).forEach(function (k0) {
+      if (gpath[k0] !== undefined) return;
+      var st = [k0], id = 'p' + (g++);
+      while (st.length) {
+        var kk = st.pop();
+        if (gpath[kk] !== undefined) continue;
+        gpath[kk] = id;
+        (adj[kk] || []).forEach(function (x) { if (gpath[x.to] === undefined) st.push(x.to); });
+      }
+    });
   }
 
   function startKey(s) {   // "NODE/EL:n" -> graph key (panel ports start on the patch side)
@@ -304,7 +318,7 @@
         (adj[kk] || []).forEach(function (x) { if (x.e.t !== 'cable' && comp[x.to] === undefined) stack.push(x.to); });
       }
     });
-    function cOf(k) { if (comp[k] === undefined) comp[k] = nextComp++; return comp[k]; }
+    function cOf(k) { return gpath[k] !== undefined ? gpath[k] : nid + '-' + (comp[k] !== undefined ? comp[k] : (comp[k] = nextComp++)); }
     var cablesHere = Object.keys(net.cables).filter(function (id) { return net.cables[id].a === nid || net.cables[id].b === nid; });
     var lay = node.layout || {};
     var left = (lay.left || []).filter(function (id) { return cablesHere.indexOf(id) >= 0; });
@@ -496,30 +510,75 @@
     return list.map(function (c) { return '<button class="fx-btn" data-fx="trace" data-circuit="' + esc(c.id) + '">🧭 ' + esc(c.name) + '</button>'; }).join('');
   }
 
-  function wirePatchHover() {
-    var svg = body && body.querySelector('.fx-svg');
+  // Highlighting is shared by every splice diagram on screen: hovering a path in one lights it up in all of them.
+  var hlLocked = null;
+  function markAll(c) {
+    Array.prototype.forEach.call(document.querySelectorAll('.fx-svg .fxe'), function (g) {
+      var on = c !== null && g.getAttribute('data-c') === c;
+      g.classList.toggle('hl', on);
+      // Bring highlighted parts to the front of their own layer only (splice lines < fibres and ports < patch leads).
+      if (on && g.parentNode && !g.classList.contains('row')) g.parentNode.appendChild(g);
+    });
+  }
+  function wirePatchHover(container) {
+    var svg = container && container.querySelector('.fx-svg');
     if (!svg) return;
-    var locked = null;
-    function mark(c) {
-      Array.prototype.forEach.call(svg.querySelectorAll('.fxe'), function (g) {
-        var on = c !== null && g.getAttribute('data-c') === c;
-        g.classList.toggle('hl', on);
-        // Bring highlighted parts to the front of their own layer only (splice lines < fibres and ports < patch leads),
-        // so a port row can never be drawn over a patch lead.
-        if (on && g.parentNode && !g.classList.contains('row')) g.parentNode.appendChild(g);
-      });
-      svg.classList.toggle('has-hl', c !== null);
-    }
     Array.prototype.forEach.call(svg.querySelectorAll('.fxe'), function (g) {
-      g.addEventListener('mouseenter', function () { if (locked === null) mark(g.getAttribute('data-c')); });
-      g.addEventListener('mouseleave', function () { if (locked === null) mark(null); });
+      g.addEventListener('mouseenter', function () { if (hlLocked === null) markAll(g.getAttribute('data-c')); });
+      g.addEventListener('mouseleave', function () { if (hlLocked === null) markAll(null); });
       g.addEventListener('click', function (ev) {   // tap (phones) or click locks the highlight; again to clear
         ev.stopPropagation();
         var c = g.getAttribute('data-c');
-        locked = locked === c ? null : c;
-        mark(locked);
+        hlLocked = hlLocked === c ? null : c;
+        markAll(hlLocked);
       });
     });
+    if (hlLocked !== null) markAll(hlLocked);
+  }
+
+  // ---- Floating windows for splice diagrams (wide screens): one per enclosure, draggable, resizable, stay open ----
+  var wins = {}, zTop = 1100, winCount = 0;
+  function frontWin(w) { w.style.zIndex = ++zTop; }
+  function openWin(id, title, html) {
+    if (wins[id]) {
+      frontWin(wins[id]);
+      wins[id].classList.remove('flash'); void wins[id].offsetWidth; wins[id].classList.add('flash');
+      return wins[id];
+    }
+    var w = document.createElement('div');
+    w.className = 'fx-win';
+    w.innerHTML = '<div class="fx-win-head"><span class="fx-win-title"></span><button class="fx-close" title="Close">&times;</button></div><div class="fx-win-body"></div>';
+    w.querySelector('.fx-win-title').textContent = title;
+    w.querySelector('.fx-win-body').innerHTML = html;
+    // Place new windows side by side from the right, then cascade down.
+    var n = winCount++ % 6, cols = Math.max(1, Math.floor((window.innerWidth - 60) / 570));
+    w.style.left = Math.max(10, window.innerWidth - 580 - (n % cols) * 570) + 'px';
+    w.style.top = (60 + Math.floor(n / cols) * 40) + 'px';
+    document.body.appendChild(w);
+    frontWin(w);
+    wins[id] = w;
+    L.DomEvent.disableClickPropagation(w);
+    L.DomEvent.disableScrollPropagation(w);
+    w.addEventListener('mousedown', function () { frontWin(w); });
+    w.querySelector('.fx-close').addEventListener('click', function () {
+      w.parentNode.removeChild(w); delete wins[id];
+      if (!Object.keys(wins).length && !(panel && panel.classList.contains('open'))) window.SiteMap.clearHighlight();
+    });
+    // Drag by the title bar.
+    var head = w.querySelector('.fx-win-head');
+    head.addEventListener('pointerdown', function (e) {
+      if (e.target.closest('button')) return;
+      var sx = e.clientX, sy = e.clientY, ox = w.offsetLeft, oy = w.offsetTop;
+      head.setPointerCapture(e.pointerId);
+      function mv(ev) {
+        w.style.left = Math.min(window.innerWidth - 60, Math.max(-w.offsetWidth + 80, ox + ev.clientX - sx)) + 'px';
+        w.style.top = Math.min(window.innerHeight - 30, Math.max(0, oy + ev.clientY - sy)) + 'px';
+      }
+      function up() { head.removeEventListener('pointermove', mv); head.removeEventListener('pointerup', up); }
+      head.addEventListener('pointermove', mv);
+      head.addEventListener('pointerup', up);
+    });
+    return w;
   }
 
   function showSplices(nid) {
@@ -549,8 +608,13 @@
     html = '<div class="fx-btns" style="margin:0 0 8px">' + jump + '</div>' + html;
     var cs = circuitsAt(nid);
     if (cs.length) html += '<div class="fx-btns"><div class="fx-sub">Trace a link through here:</div>' + traceButtons(cs) + '</div>';
-    openPanel(ICON.splice + ' Splices: ' + (node.name || nid), html);
-    wirePatchHover();
+    if (window.innerWidth > 700) {
+      var w = openWin(nid, ICON.splice + ' Splices: ' + (node.name || nid), html);
+      wirePatchHover(w);
+    } else {
+      openPanel(ICON.splice + ' Splices: ' + (node.name || nid), html);
+      wirePatchHover(body);
+    }
     var ids = Object.keys(net.cables).filter(function (id) { return net.cables[id].a === nid || net.cables[id].b === nid; });
     window.SiteMap.highlightIds(ids, false);
   }
@@ -625,7 +689,7 @@
       if (!net) return '';
       return Object.keys(net.cables).filter(function (id) { return (net.cables[id].route || []).indexOf(ductId) >= 0; }).join(', ');
     },
-    isOpen: function () { return !!(panel && panel.classList.contains('open')); },
+    isOpen: function () { return !!(panel && panel.classList.contains('open')) || Object.keys(wins).length > 0; },
     cableOpened: function (id) {
       if (!net || !net.cables[id]) return;
       openPanel(ICON.cable + ' Cable ' + id + ': ' + net.cables[id].name, cableHtml(id));

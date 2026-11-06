@@ -159,3 +159,14 @@ body {
   padding: 8px 12px; border-radius: 8px; font: 13px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; box-shadow: 0 2px 10px rgba(0,0,0,.4); max-width: calc(100vw - 32px); }
 .update-bar button { margin-left: 8px; border: 0; border-radius: 5px; padding: 4px 10px; background: #4fc3f7; color: #00243a; font-weight: 600; cursor: pointer; }
 .fx-svglink { fill: #0b5cad; cursor: pointer; text-decoration: underline; }
+
+/* Floating splice-diagram windows (wide screens) */
+.fx-win { position: fixed; width: min(560px, 90vw); height: min(560px, 80vh); min-width: 280px; min-height: 160px; resize: both; overflow: hidden;
+  display: flex; flex-direction: column; background: #fff; color: #222; border-radius: 8px; box-shadow: 0 4px 22px rgba(0,0,0,.45);
+  font: 13px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.fx-win-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #eceff1; border-bottom: 1px solid #cfd8dc;
+  cursor: move; user-select: none; touch-action: none; border-radius: 8px 8px 0 0; }
+.fx-win-title { font-weight: 600; font-size: 13px; }
+.fx-win-body { overflow: auto; padding: 8px 10px 14px; flex: 1; }
+.fx-win.flash { animation: fxflash .6s; }
+@keyframes fxflash { 0% { box-shadow: 0 0 0 4px #ff6d00; } 100% { box-shadow: 0 4px 22px rgba(0,0,0,.45); } }
