@@ -482,8 +482,11 @@
         var pa = pt(a, b), pb = pt(b, a);
         var mx = (pa.x + pb.x) / 2;
         var d = 'M' + pa.x + ',' + pa.y + ' C' + mx + ',' + pa.y + ' ' + mx + ',' + pb.y + ' ' + pb.x + ',' + pb.y;
-        lines.push('<g class="fxe" data-c="' + cOf(k) + '"><path class="hit" d="' + d + '" fill="none" stroke="transparent" stroke-width="10"/>');
-        if (LIGHT[col.name] || e.t === 'through') lines.push('<path class="ln" d="' + d + '" fill="none" stroke="#555" stroke-width="' + (e.t === 'through' ? 5 : 3.6) + '"' + dash + '/>');
+        // Layers of one splice line: an orange halo (only shown when highlighted), a dark casing for light colours
+        // (white, yellow, rose, aqua) so they show on white, then the fibre colour itself.
+        lines.push('<g class="fxe" data-c="' + cOf(k) + '"><path class="hit" d="' + d + '" fill="none" stroke="transparent" stroke-width="10"/>' +
+          '<path class="halo" d="' + d + '" fill="none" stroke="transparent" stroke-width="8" stroke-linecap="round"/>');
+        if (LIGHT[col.name] || e.t === 'through') lines.push('<path class="ln-case" d="' + d + '" fill="none" stroke="#555" stroke-width="' + (e.t === 'through' ? 5 : 3.6) + '"' + dash + '/>');
         lines.push('<path class="ln" d="' + d + '" fill="none" stroke="' + col.hex + '" stroke-width="' + (e.t === 'through' ? 3 : 2.2) + '"' + dash + '/>');
         if (e.t === 'splice') {   // splice mark (and tray number) at the midpoint
           var my = (pa.y + pb.y) / 2;
