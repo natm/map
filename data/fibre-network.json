@@ -386,22 +386,22 @@
   "circuits": [
     {
       "id": "tdr",
-      "name": "Ty Di rif link (1G BiDi)",
+      "name": "Ty Di rif circuit (1G BiDi)",
       "start": "C2-ENC/P:9"
     },
     {
       "id": "c1",
-      "name": "1 The Cottage link (1G BiDi)",
+      "name": "1 The Cottage circuit (1G BiDi)",
       "start": "C2-ENC/P:13"
     },
     {
       "id": "c2",
-      "name": "2 The Cottage link (1G BiDi)",
+      "name": "2 The Cottage circuit (1G BiDi)",
       "start": "C2-ENC/MC:sfp1"
     },
     {
       "id": "ld",
-      "name": "Llwyn Dewi link (1G BiDi)",
+      "name": "Llwyn Dewi circuit (1G BiDi)",
       "start": "C2-ENC/P:12"
     }
   ]

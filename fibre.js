@@ -16,7 +16,7 @@
   var PATCH = '#e6b800';
 
   // One icon per kind of thing, used on every link and button: 🧵 cable · ⭕ duct · 🕳️ chamber · 📦 box/enclosure on the map ·
-  // 🔀 splice diagram · 🧭 link trace · 📍 details and photos.
+  // 🔀 splice diagram · 🧭 circuit trace · 📍 details and photos.
   var ICON = { cable: '🧵', duct: '⭕', chamber: '🕳️', box: '📦', splice: '🔀', trace: '🧭', details: '📍' };
   function iconFor(id) {
     if (net && net.cables && net.cables[id]) return ICON.cable;
@@ -613,7 +613,7 @@
       html = '<p class="fx-note">❓ What happens inside ' + esc(node.name || nid) + ' isn\'t documented yet.' + (node.notes ? ' ' + esc(node.notes) : '') + '</p>';
     } else {
       html = '<div class="fx-scroll">' + spliceSvg(nid) + '</div>' +
-        '<p class="fx-note">Scroll sideways on a phone. Use a trace below to follow one link end to end.</p>';
+        '<p class="fx-note">Scroll sideways on a phone. Use a trace below to follow one circuit end to end.</p>';
     }
     // Jump buttons: this enclosure on the map, and the splice diagrams at the other end of each cable.
     var others = [];
@@ -631,14 +631,14 @@
       }).join('');
     html = '<div class="fx-btns" style="margin:0 0 8px">' + jump + '</div>' + html;
     var cs = circuitsAt(nid);
-    if (cs.length) html += '<div class="fx-btns"><div class="fx-sub">Trace a link through here:</div>' + traceButtons(cs) + '</div>';
+    if (cs.length) html += '<div class="fx-btns"><div class="fx-sub">Trace a circuit through here:</div>' + traceButtons(cs) + '</div>';
     var sb = showView('splice:' + nid, ICON.splice + ' Splices: ' + (node.name || nid), html, { cls: 'big', update: false });
     wirePatchHover(sb.parentNode);
     var ids = Object.keys(net.cables).filter(function (id) { return net.cables[id].a === nid || net.cables[id].b === nid; });
     window.SiteMap.highlightIds(ids, false);
   }
 
-  // ---- Cable view: every fibre, what it joins at each end, and the link it carries ----
+  // ---- Cable view: every fibre, what it joins at each end, and the circuit it carries ----
   function endDesc(nid, cable, n) {
     var node = net.nodes[nid] || { name: nid };
     var k = key(nid, 'C', cable, n);
@@ -674,8 +674,8 @@
     };
     return window.SiteMap.lineAccuracy(id) + '<p class="fx-sub">' + c.fibres + ' fibres · ' + esc(an) + ' → ' + esc(bn) + '</p>' +
       '<div class="fx-btns">' + ends(c.a, an) + ends(c.b, bn) + '</div>' +
-      '<div class="fx-scroll"><table class="fx-table"><tr><th>#</th><th>Colour</th><th>At ' + esc(an) + '</th><th>At ' + esc(bn) + '</th><th>Link</th></tr>' + rows + '</table></div>' +
-      '<p class="fx-note">Tap a link to trace it end to end; its whole path lights up on the map.</p>';
+      '<div class="fx-scroll"><table class="fx-table"><tr><th>#</th><th>Colour</th><th>At ' + esc(an) + '</th><th>At ' + esc(bn) + '</th><th>Circuit</th></tr>' + rows + '</table></div>' +
+      '<p class="fx-note">Tap a circuit to trace it end to end; its whole path lights up on the map.</p>';
   }
 
   // ---- Assumed straight lines for cables that aren't drawn yet but have both ends on the map ----
@@ -728,7 +728,7 @@
     popupExtras: function (p) {
       if (!net || !p || !p.id) return '';
       var html = '';
-      // Duct routes: the chambers at each end, the cables in each duct, and the links carried.
+      // Duct routes: the chambers at each end, the cables in each duct, and the circuits carried.
       if (p.type === 'duct') {
         var ends = String(p.id).split('-');
         var endLinks = ends.map(function (e2) {
@@ -745,7 +745,7 @@
         allCables.forEach(function (c2) { circuitsOn(c2).forEach(function (ci) { if (links.indexOf(ci) < 0) links.push(ci); }); });
         html += '<div class="also"><div class="also-h">Ends</div><div style="font-size:12px">' + endLinks + '</div>' +
           '<div class="also-h" style="margin-top:4px">Ducts and cables</div><ul class="fx-through">' + ductRows + '</ul>' +
-          (links.length ? '<div class="also-h" style="margin-top:4px">Links through it</div>' + traceButtons(links) : '') + '</div>';
+          (links.length ? '<div class="also-h" style="margin-top:4px">Circuits through it</div>' + traceButtons(links) : '') + '</div>';
         return html;
       }
       // Chambers and structures: the cables routed through them, and the ducts in and out.
