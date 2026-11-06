@@ -742,7 +742,7 @@
 
   var TB = [
     ['layers', '🗂️', 'Layers'], ['chambers', '🕳️', 'Chambers'], ['ducts', '⭕', 'Ducts'],
-    ['enclosures', '🔀', 'Enclosures'], ['cables', '🧵', 'Cables'], ['links', '🧭', 'Circuits'], ['schematic', '📐', 'Schematic'], ['legend', '🔑', 'Legend']
+    ['enclosures', '🔀', 'Enclosures'], ['cables', '🧵', 'Cables'], ['links', '🧭', 'Circuits'], ['schematic', '📐', 'Schematic'], ['edit', '✏️', 'Edit'], ['legend', '🔑', 'Legend']
   ];
   var bar = L.DomUtil.create('div', 'tb', document.body);
   // Build info under the name: the source commits of the app code and the data (stamped by scripts/publish-map.sh).
@@ -804,6 +804,104 @@
     Array.prototype.forEach.call(bar.querySelectorAll('.tb-btn'), function (x) { if (x.getAttribute('data-tb') !== 'legend') x.classList.remove('on'); });
   }
   // The legend is its own docked panel (bottom left) that stays open while other menus and the map are used.
+  // ---- Edit mode (Nat, 2026-11-06): drag point items to new positions, or tap the map to drop a new point, then copy
+  // the list and paste it into Claude, who updates the data files. Nothing is saved to the site itself; the list
+  // is kept in this browser until cleared.
+  var editing = false, edits = {}, newPts = [], newLayer = L.layerGroup();
+  try { var sv = JSON.parse(localStorage.getItem('map-edits') || '{}'); edits = sv.edits || {}; newPts = sv.newPts || []; } catch (e) {}
+  function saveEdits() { try { localStorage.setItem('map-edits', JSON.stringify({ edits: edits, newPts: newPts })); } catch (e) {} }
+  function f6(x) { return (Math.round(x * 1e6) / 1e6).toFixed(6); }
+  function copyText(t, el) {
+    function done() { if (el) { el.classList.add('copied'); setTimeout(function () { el.classList.remove('copied'); }, 900); } }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(done, fallback); else fallback();
+    function fallback() { var ta = document.createElement('textarea'); ta.value = t; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) {} document.body.removeChild(ta); }
+  }
+  // The batch to paste into Claude: what moved (old and new positions) and any new points.
+  function exportJson() {
+    var r6 = function (x) { return Math.round(x * 1e6) / 1e6; };
+    return JSON.stringify({
+      map_edits: new Date().toISOString().slice(0, 16) + 'Z',
+      moved: Object.keys(edits).sort().map(function (id) {
+        var e = edits[id], f = featureById[id], p = (f && f.feature && f.feature.properties) || {};
+        return { id: id, name: p.name || '', old: [r6(e.lat0), r6(e.lng0)], new: [r6(e.lat), r6(e.lng)], moved_m: Math.round(L.latLng(e.lat, e.lng).distanceTo(L.latLng(e.lat0, e.lng0)) * 10) / 10 };
+      }),
+      new: newPts.map(function (p, i) { return { name: p.name || ('point ' + (i + 1)), at: [r6(p.lat), r6(p.lng)] }; })
+    }, null, 1).replace(/\[\n\s*([-\d.]+),\n\s*([-\d.]+)\n\s*\]/g, '[$1, $2]');
+  }
+  function editLines() {
+    var out = [];
+    Object.keys(edits).sort().forEach(function (id) {
+      var e = edits[id], d = L.latLng(e.lat, e.lng).distanceTo(L.latLng(e.lat0, e.lng0));
+      out.push('MOVE ' + id + ' ' + f6(e.lat) + ', ' + f6(e.lng) + '  (was ' + f6(e.lat0) + ', ' + f6(e.lng0) + '; moved ' + d.toFixed(1) + ' m)');
+    });
+    newPts.forEach(function (p, i) { out.push('NEW ' + (p.name || ('point ' + (i + 1))) + ' ' + f6(p.lat) + ', ' + f6(p.lng)); });
+    return out;
+  }
+  var ep = L.DomUtil.create('div', 'edit-panel', document.body);
+  L.DomEvent.disableClickPropagation(ep); L.DomEvent.disableScrollPropagation(ep);
+  function renderEdit() {
+    var lines = editLines();
+    ep.innerHTML = '<div class="tb-dd-head">✏️ Edit mode<button class="tb-x" title="Leave edit mode">&times;</button></div><div class="tb-dd-body">' +
+      '<div class="tb-sub">Drag chambers, boxes, poles or other points to move them; tap empty map to drop a new point (name it below). When done, <b>Export</b> copies a JSON batch (ids, old and new positions) to paste into Claude. Kept in this browser until cleared.</div>' +
+      (lines.length ? '<div class="edit-list">' + Object.keys(edits).sort().map(function (id) {
+          var e = edits[id];
+          return '<div class="edit-row"><code class="edit-copy" data-t="MOVE ' + esc(id) + ' ' + f6(e.lat) + ', ' + f6(e.lng) + '">MOVE <b>' + esc(id) + '</b> ' + f6(e.lat) + ', ' + f6(e.lng) + '</code><button class="edit-undo" data-id="' + esc(id) + '" title="Put it back">↺</button></div>';
+        }).join('') + newPts.map(function (p, i) {
+          return '<div class="edit-row"><input class="edit-name" data-i="' + i + '" value="' + esc(p.name || '') + '" placeholder="name (e.g. MH21)"><code class="edit-copy" data-t="NEW ' + esc(p.name || ('point ' + (i + 1))) + ' ' + f6(p.lat) + ', ' + f6(p.lng) + '">' + f6(p.lat) + ', ' + f6(p.lng) + '</code><button class="edit-del" data-i="' + i + '" title="Remove">✕</button></div>';
+        }).join('') + '</div>' : '<div class="tb-sub"><i>No changes yet.</i></div>') +
+      '<div class="fx-btns"><button class="fx-btn edit-all"' + (lines.length ? '' : ' disabled') + '>📤 Export</button><button class="fx-btn edit-clear"' + (lines.length ? '' : ' disabled') + '>Clear</button></div></div>';
+    ep.querySelector('.tb-x').onclick = function () { setEdit(false); };
+    Array.prototype.forEach.call(ep.querySelectorAll('.edit-copy'), function (c) { c.onclick = function () { copyText(c.getAttribute('data-t'), c); }; });
+    Array.prototype.forEach.call(ep.querySelectorAll('.edit-undo'), function (b) { b.onclick = function () {
+      var id = b.getAttribute('data-id'), e = edits[id], l = featureById[id];
+      if (l && l.setLatLng) l.setLatLng([e.lat0, e.lng0]);
+      delete edits[id]; saveEdits(); renderEdit();
+    }; });
+    Array.prototype.forEach.call(ep.querySelectorAll('.edit-del'), function (b) { b.onclick = function () { newPts.splice(+b.getAttribute('data-i'), 1); saveEdits(); drawNew(); renderEdit(); }; });
+    Array.prototype.forEach.call(ep.querySelectorAll('.edit-name'), function (inp) { inp.onchange = function () { newPts[+inp.getAttribute('data-i')].name = inp.value.trim(); saveEdits(); renderEdit(); }; });
+    var all = ep.querySelector('.edit-all'); if (all) all.onclick = function () {
+      var j = exportJson();
+      copyText(j, all);
+      var ta = ep.querySelector('.edit-json') || L.DomUtil.create('textarea', 'edit-json', ep.querySelector('.tb-dd-body'));
+      ta.readOnly = true; ta.value = j; ta.select();
+      all.textContent = '✅ Copied: paste into Claude';
+    };
+    var clr = ep.querySelector('.edit-clear'); if (clr) clr.onclick = function () {
+      if (!confirm('Clear all edits? Moved items go back.')) return;
+      Object.keys(edits).forEach(function (id) { var l = featureById[id], e = edits[id]; if (l && l.setLatLng) l.setLatLng([e.lat0, e.lng0]); });
+      edits = {}; newPts = []; saveEdits(); drawNew(); renderEdit();
+    };
+  }
+  function drawNew() {
+    newLayer.clearLayers();
+    newPts.forEach(function (p, i) {
+      var m = L.marker([p.lat, p.lng], { draggable: true, icon: icon('circle', '#e91e63', '+', 18) }).addTo(newLayer);
+      m.bindTooltip(p.name || ('new ' + (i + 1)), { permanent: true, direction: 'right', offset: [8, 0], className: 'pt-label' });
+      m.on('dragend', function () { var ll = m.getLatLng(); p.lat = ll.lat; p.lng = ll.lng; saveEdits(); renderEdit(); });
+    });
+  }
+  function onMapClick(e) { if (!editing) return; newPts.push({ lat: e.latlng.lat, lng: e.latlng.lng, name: '' }); saveEdits(); drawNew(); renderEdit(); }
+  map.on('click', onMapClick);
+  function setEdit(on) {
+    editing = on;
+    document.body.classList.toggle('editing', on);
+    var eb = bar.querySelector('[data-tb="edit"]'); if (eb) eb.classList.toggle('on', on);
+    ep.classList.toggle('open', on);
+    Object.keys(featureById).forEach(function (id) {
+      var l = featureById[id];
+      if (!l.dragging || !l.getLatLng || !(l instanceof L.Marker)) return;
+      if (on) {
+        l.dragging.enable();
+        if (!l._editWired) {
+          l._editWired = true;
+          l.on('dragstart', function () { if (!edits[id]) { var o = l.getLatLng(); edits[id] = { lat0: o.lat, lng0: o.lng, lat: o.lat, lng: o.lng }; } });
+          l.on('dragend', function () { var ll = l.getLatLng(); edits[id].lat = ll.lat; edits[id].lng = ll.lng; saveEdits(); renderEdit(); });
+        }
+      } else l.dragging.disable();
+      if (edits[id] && on) l.setLatLng([edits[id].lat, edits[id].lng]);
+    });
+    if (on) { newLayer.addTo(map); drawNew(); renderEdit(); } else map.removeLayer(newLayer);
+  }
   var leg = L.DomUtil.create('div', 'tb-legend-panel', document.body);
   L.DomEvent.disableClickPropagation(leg); L.DomEvent.disableScrollPropagation(leg);
   function setLegend(on) {
@@ -818,6 +916,7 @@
     var b = e.target.closest('[data-tb]');
     if (!b) return;
     if (b.getAttribute('data-tb') === 'legend') setLegend(!leg.classList.contains('open'));
+    else if (b.getAttribute('data-tb') === 'edit') setEdit(!editing);
     else openDd(b.getAttribute('data-tb'));
   });
   // Search: results update as you type; arrow keys move, Enter opens, Escape closes.
