@@ -277,3 +277,4 @@ a.tb-item:hover, .tb-item:hover { border-color: var(--accent); }
 .fx-details { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 6px; }
 .fx-details summary { cursor: pointer; color: #90a4ae; font-size: 12px; }
 .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel); color: var(--ink); }
+.fx-h { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #90a4ae; font-weight: 600; margin: 10px 0 4px; }

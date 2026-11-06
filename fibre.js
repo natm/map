@@ -31,7 +31,8 @@
 
   var net = null;
   var adj = {};
-  var traces = {};   // circuit id -> sequence
+  var traces = {};   // circuit id -> sequence (all its fibres joined, for lookups)
+  var traceSets = {}; // circuit id -> one sequence per fibre
   var gpath = {};    // graph key -> global path id
 
   function esc(s) {
@@ -98,7 +99,12 @@
         }
       });
     });
-    (net.circuits || []).forEach(function (c) { traces[c.id] = trace(startKey(c.start)); });
+    // A circuit uses 1 fibre (BiDi optics) or 2 (one each way); 'start' is one point, or a list with one point per fibre.
+    (net.circuits || []).forEach(function (c) {
+      var starts = Array.isArray(c.start) ? c.start : [c.start];
+      traceSets[c.id] = starts.map(function (s0) { return trace(startKey(s0)); });
+      traces[c.id] = [].concat.apply([], traceSets[c.id]);
+    });
     // Global path ids: everything joined by splices, patches, ports and cable fibres. Used to highlight one optical
     // path across every open splice diagram.
     var g = 0;
@@ -272,11 +278,25 @@
     return '<div class="fx-trace">' + html + '</div>';
   }
 
+  function circuitInfo(c) {
+    var n = c.fibres || (Array.isArray(c.start) ? c.start.length : 1);
+    return n + (n === 1 ? ' fibre' : ' fibres') + (c.optics ? ' · ' + c.optics : '');
+  }
+  function traceBody(seq, cid) {
+    var c = (net.circuits || []).filter(function (x) { return x.id === cid; })[0];
+    var sets = (cid && traceSets[cid]) || [seq];
+    var head = c ? '<p class="fx-note">' + esc(circuitInfo(c)) + '</p>' : '';
+    var want = c && c.fibres ? c.fibres : sets.length;
+    if (sets.length === 1 && want < 2) return head + traceHtml(sets[0]);
+    return head + sets.map(function (s1, i) { return '<div class="fx-h">Fibre ' + (i + 1) + '</div>' + traceHtml(s1); }).join('') +
+      (want > sets.length ? '<p class="fx-note">❓ ' + (want - sets.length) + ' more fibre' + (want - sets.length > 1 ? 's' : '') + ' not documented yet.</p>' : '');
+  }
+  window.FibreCircuitInfo = function (c) { return circuitInfo(c); };
   function showTrace(name, seq, cid) {
     var showRoutes = false;
     try { showRoutes = localStorage.getItem('fx-show-routes') === '1'; } catch (e) {}
     var body = showView('trace:' + (cid || name), ICON.trace + ' ' + name, '<label class="fx-toggle"><input type="checkbox" class="fx-routes-toggle"' + (showRoutes ? ' checked' : '') + '> Show chambers and ducts along each cable</label>' +
-      '<div class="fx-trace-wrap' + (showRoutes ? ' show-routes' : '') + '">' + traceHtml(seq) + '</div>' +
+      '<div class="fx-trace-wrap' + (showRoutes ? ' show-routes' : '') + '">' + traceBody(seq, cid) + '</div>' +
       '<p class="fx-note">Cables on this path are highlighted on the map. Dashed joints are assumed, not checked on site.</p>');
     var cb = body.querySelector('.fx-routes-toggle');
     cb.addEventListener('change', function () {

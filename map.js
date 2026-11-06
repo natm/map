@@ -594,7 +594,7 @@
     }
     if (!F) return '<div class="tb-sub">Loading…</div>';
     if (kind === 'links') return F.circuits.map(function (c) {
-      return '<a href="#" class="tb-item tb-line" data-fx="trace" data-circuit="' + esc(c.id) + '"><b>🧭 ' + esc(c.name) + '</b></a>';
+      return '<a href="#" class="tb-item tb-line" data-fx="trace" data-circuit="' + esc(c.id) + '"><b class="tb-name">🧭 ' + esc(c.name) + '</b><span class="tb-meta">' + esc(window.FibreCircuitInfo ? window.FibreCircuitInfo(c) : '') + '</span></a>';
     }).join('') || '<div class="tb-sub">No circuits recorded.</div>';
     if (kind === 'cables') return F.cables.map(function (c) {
       var l = lineById[c.id], t = l ? tier(l.feature.properties || {}) : 'none';
