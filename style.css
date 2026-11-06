@@ -251,7 +251,7 @@ a.tb-item:hover, .tb-item:hover { border-color: var(--accent); }
 .fx-win, .fx-panel { background: var(--panel); color: var(--ink); border: 1px solid var(--line); color-scheme: dark; }
 .fx-win.small { width: min(380px, 90vw); height: auto; max-height: 75vh; }
 .fx-win.big { width: min(560px, 90vw); height: min(560px, 80vh); }
-.fx-win:not(.small):not(.big) { width: min(460px, 90vw); height: min(600px, 80vh); }
+.fx-win:not(.small):not(.big):not(.huge) { width: min(460px, 90vw); height: min(600px, 80vh); }
 .fx-win-body a, .fx-body a, .fx-nname a, .fx-clabel a, .fx-through a { color: #90caf9; }
 .fx-note, .fx-sub, .also-h, .also-type, .fx-join, .fx-end { color: #9fb3c0; }
 .fx-end.unknown { color: #ffb74d; }
@@ -287,3 +287,16 @@ body.panel-open .tb-dd { left: auto; }
 /* Legend sits on the right, against the search box */
 .tb-btn[data-tb="legend"] { margin-left: auto; }
 .tb-search { margin-left: 0; }
+
+/* Schematics (dark, scroll sideways when wide) */
+.fx-schem-wrap { overflow-x: auto; margin: 4px 0; }
+.fx-schem { display: block; }
+.sc-link { cursor: pointer; }
+.sc-link:hover rect, .sc-link:hover line:last-of-type { filter: brightness(1.35); }
+.fx-tabs { display: flex; gap: 4px; margin: 0 0 8px; border-bottom: 1px solid var(--line); }
+.fx-tab { border: 0; background: none; color: #90a4ae; padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; }
+.fx-tab.on { color: #90caf9; border-bottom-color: var(--accent); }
+.fx-win.huge { width: min(1100px, 94vw); height: min(820px, 86vh); }
+.fx-schem.fit { width: 100%; min-width: 560px; height: auto; }
+@media (min-width: 701px) { .tb-brand { display: flex; flex-direction: column; line-height: 1.15; } }
+.tb-build { font-size: 9.5px; font-weight: 400; color: #90a4ae; letter-spacing: 0; font-family: ui-monospace, Menlo, monospace; cursor: help; }

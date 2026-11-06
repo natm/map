@@ -278,6 +278,14 @@
     return '<div class="fx-trace">' + html + '</div>';
   }
 
+  function wireTabs(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('.fx-tab'), function (t) {
+      t.addEventListener('click', function () {
+        Array.prototype.forEach.call(root.querySelectorAll('.fx-tab'), function (x) { x.classList.toggle('on', x === t); });
+        Array.prototype.forEach.call(root.querySelectorAll('.fx-pane'), function (p) { p.hidden = p.getAttribute('data-pane') !== t.getAttribute('data-tab'); });
+      });
+    });
+  }
   function circuitInfo(c) {
     var n = c.fibres || (Array.isArray(c.start) ? c.start.length : 1);
     return n + (n === 1 ? ' fibre' : ' fibres') + (c.optics ? ' · ' + c.optics : '');
@@ -295,15 +303,173 @@
   function showTrace(name, seq, cid) {
     var showRoutes = false;
     try { showRoutes = localStorage.getItem('fx-show-routes') === '1'; } catch (e) {}
-    var body = showView('trace:' + (cid || name), ICON.trace + ' ' + name, '<label class="fx-toggle"><input type="checkbox" class="fx-routes-toggle"' + (showRoutes ? ' checked' : '') + '> Show chambers and ducts along each cable</label>' +
+    var tabs = cid ? '<div class="fx-tabs"><button class="fx-tab on" data-tab="optical">Optical path</button><button class="fx-tab" data-tab="schematic">📐 Schematic</button></div>' : '';
+    var body = showView('trace:' + (cid || name), ICON.trace + ' ' + name, tabs + '<div class="fx-pane" data-pane="optical"><label class="fx-toggle"><input type="checkbox" class="fx-routes-toggle"' + (showRoutes ? ' checked' : '') + '> Show chambers and ducts along each cable</label>' +
       '<div class="fx-trace-wrap' + (showRoutes ? ' show-routes' : '') + '">' + traceBody(seq, cid) + '</div>' +
-      '<p class="fx-note">Cables on this path are highlighted on the map. Dashed joints are assumed, not checked on site.</p>');
+      '<p class="fx-note">Cables on this path are highlighted on the map. Dashed joints are assumed, not checked on site.</p></div>' +
+      (cid ? '<div class="fx-pane" data-pane="schematic" hidden>' + circuitSchematic(cid) + '</div>' : ''));
+    wireTabs(body);
     var cb = body.querySelector('.fx-routes-toggle');
     cb.addEventListener('change', function () {
       body.querySelector('.fx-trace-wrap').classList.toggle('show-routes', cb.checked);
       try { localStorage.setItem('fx-show-routes', cb.checked ? '1' : '0'); } catch (e) {}
     });
     window.SiteMap.highlightIds(seqCables(seq), true);
+  }
+
+
+  // ---- Schematic views (Nat, 2026-11-06: build all three to evaluate) ----
+  // 1. Circuit schematic: the circuit's cables laid out in a straight line, with every chamber and duct on the way.
+  // 2. Cable schematic: one cable's route the same way.
+  // 3. Duct network: every chamber and duct as a clean node-and-line diagram, placed roughly where they are.
+  function short(t, n) { t = String(t || ''); return t.length > n ? t.slice(0, n - 1) + '…' : t; }
+  function legsFromSeq(seq) {
+    var legs = [];
+    seq.forEach(function (st, i) {
+      if (!st.edge || st.edge.t !== 'cable') return;
+      var from = seq[i - 1] && seq[i - 1].key ? parseKey(seq[i - 1].key).node : null;
+      var to = seq[i + 1] && seq[i + 1].key ? parseKey(seq[i + 1].key).node : null;
+      var c = net.cables[st.edge.cable], r = (c.route || [from, to]).slice();
+      if (r[0] !== from && r[r.length - 1] === from) r.reverse();
+      legs.push({ cable: st.edge.cable, fibre: st.edge.fibre, route: r, known: !!c.route });
+    });
+    return legs;
+  }
+  function stripSvg(legs) {
+    // Flatten the legs into nodes, with the duct (if any) on the link after each node.
+    var nodes = [], links = [], bands = [];
+    legs.forEach(function (lg) {
+      var startIdx = null;
+      lg.route.forEach(function (it) {
+        if (String(it).indexOf('/') > 0) { links[nodes.length - 1] = { duct: it, known: lg.known }; return; }
+        if (!nodes.length || nodes[nodes.length - 1] !== it) {
+          if (nodes.length && !links[nodes.length - 1]) links[nodes.length - 1] = { duct: null, known: lg.known };
+          nodes.push(it);
+        }
+        if (startIdx === null) startIdx = nodes.length - 1;
+      });
+      bands.push({ lg: lg, a: startIdx, b: nodes.length - 1 });
+    });
+    // Vertical: cables as bars on the left, the boxes down the middle, ducts named beside the links.
+    var STEP = 62, BX = 130, BW = 170, BH = 36, W = 420, H = 16 + nodes.length * STEP, out = [];
+    function cy(i) { return 14 + i * STEP + BH / 2; }
+    links.forEach(function (l, i) {
+      if (!l || i >= nodes.length - 1) return;
+      var x = BX + BW / 2, y1 = cy(i) + BH / 2, y2 = cy(i + 1) - BH / 2;
+      out.push('<line x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '" stroke="' + (l.duct ? '#90a4ae' : '#607d8b') + '" stroke-width="' + (l.duct ? 7 : 2) + '"' +
+        (l.known ? '' : ' stroke-dasharray="4 3"') + '/>');
+      var lbl = l.duct ? '⭕ ' + l.duct : l.known ? 'direct' : '❓ route not recorded';
+      var inf = l.duct ? window.SiteMap.featureInfo(l.duct) || {} : {};
+      out.push('<g' + (l.duct ? ' class="sc-link" data-fx="feature" data-id="' + esc(l.duct) + '"' : '') + '><text x="' + (x + 10) + '" y="' + ((y1 + y2) / 2 + 3) + '" font-size="10" fill="' + (l.duct ? '#cfd8dc' : '#90a4ae') + '">' + esc(lbl) +
+        (inf.od_mm ? '<tspan fill="#90a4ae" font-size="9"> ' + esc(inf.od_mm + ' mm ' + [inf.colour, inf.type].filter(Boolean).join(' ')) + '</tspan>' : '') + '</text></g>');
+    });
+    bands.forEach(function (bd) {
+      var lg = bd.lg, c = net.cables[lg.cable], col = lg.fibre ? fibreColour(c, lg.fibre).hex : '#ff9800';
+      var y1 = cy(bd.a) - BH / 2 + 2, y2 = cy(bd.b) + BH / 2 - 2, my = (y1 + y2) / 2;
+      out.push('<g class="sc-link" data-fx="cable" data-id="' + esc(lg.cable) + '"><rect x="12" y="' + y1 + '" width="12" height="' + (y2 - y1) + '" rx="6" fill="' + col + '" stroke="#90a4ae" stroke-width="1"/>' +
+        '<text x="32" y="' + (my - 3) + '" font-size="11" font-weight="bold" fill="#eceff1">🧵 ' + esc(lg.cable) + '</text>' +
+        '<text x="32" y="' + (my + 10) + '" font-size="9.5" fill="#b0bec5">' + esc(lg.fibre ? 'fibre ' + lg.fibre + ' ' + fibreColour(c, lg.fibre).name : c.fibres + ' fibres') + '</text></g>');
+    });
+    nodes.forEach(function (id, i) {
+      var inf = window.SiteMap.featureInfo(id) || {}, nd = net.nodes[id], y = cy(i) - BH / 2;
+      var isCh = ['manhole', 'chamber', 'valve_box', 'draw_pit'].indexOf(inf.type) >= 0;
+      var act = nd && nd.documented ? 'data-fx="splice" data-node="' + esc(id) + '"' : window.SiteMap.hasFeature(id) ? 'data-fx="feature" data-id="' + esc(id) + '"' : '';
+      out.push('<g class="sc-node' + (act ? ' sc-link' : '') + '" ' + act + '><rect x="' + BX + '" y="' + y + '" width="' + BW + '" height="' + BH + '" rx="' + (isCh ? 2 : 9) + '" fill="' + (isCh ? '#263238' : '#1e3a5f') +
+        '" stroke="' + (isCh ? '#90a4ae' : '#64b5f6') + '" stroke-width="1.5"/>' +
+        '<text x="' + (BX + 8) + '" y="' + (y + 15) + '" font-size="11" font-weight="bold" fill="#eceff1">' + esc((iconFor(id) || (nd ? ICON.box : '❓')) + ' ' + id) + '</text>' +
+        '<text x="' + (BX + 8) + '" y="' + (y + 28) + '" font-size="9.5" fill="#b0bec5">' + esc(short(inf.name || (nd && nd.name) || '', 30)) + '</text></g>');
+    });
+    return '<div class="fx-schem-wrap"><svg class="fx-schem" xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">' + out.join('') + '</svg></div>';
+  }
+  function circuitSchematic(cid) {
+    var sets = traceSets[cid] || [];
+    return sets.map(function (sq, i) {
+      return (sets.length > 1 ? '<div class="fx-h">Fibre ' + (i + 1) + '</div>' : '') + stripSvg(legsFromSeq(sq));
+    }).join('') + '<p class="fx-note">Rounded blue boxes are enclosures and buildings; square grey boxes are chambers. Thick grey lines are ducts, thin lines direct runs; dashed means the route isn\'t recorded. Tap anything to open it.</p>';
+  }
+  function cableSchematic(id) {
+    var c = net.cables[id];
+    return stripSvg([{ cable: id, fibre: null, route: (c.route || [c.a, c.b]).slice(), known: !!c.route }]);
+  }
+
+  function networkSchematic() {
+    var feats = window.SiteMap.allFeatures();
+    var CH = ['manhole', 'chamber', 'valve_box', 'draw_pit'];
+    var pos = {}, used = {};
+    feats.forEach(function (f) { pos[f.id] = f; });
+    var edges = [];
+    feats.forEach(function (f) {
+      if (f.props.type !== 'duct') return;
+      var ends = f.id.split('-');
+      if (ends.length !== 2 || !pos[ends[0]] || !pos[ends[1]]) return;
+      var cs = [];
+      (f.props.ducts || []).forEach(function (d) {
+        Object.keys(net.cables).forEach(function (cid) { if ((net.cables[cid].route || []).indexOf(d.id) >= 0 && cs.indexOf(cid) < 0) cs.push(cid); });
+      });
+      edges.push({ a: ends[0], b: ends[1], id: f.id, n: (f.props.ducts || []).length, cables: cs, duct: true });
+      used[ends[0]] = used[ends[1]] = 1;
+    });
+    // Direct runs in cable routes (no duct between two points), e.g. a chamber into a building or enclosure.
+    Object.keys(net.cables).forEach(function (cid) {
+      var r = net.cables[cid].route || [];
+      for (var i = 0; i < r.length - 1; i++) {
+        if (String(r[i]).indexOf('/') > 0 || String(r[i + 1]).indexOf('/') > 0) continue;
+        if (!pos[r[i]] || !pos[r[i + 1]]) continue;
+        var ex = edges.filter(function (e) { return !e.duct && ((e.a === r[i] && e.b === r[i + 1]) || (e.a === r[i + 1] && e.b === r[i])); })[0];
+        if (ex) { if (ex.cables.indexOf(cid) < 0) ex.cables.push(cid); continue; }
+        edges.push({ a: r[i], b: r[i + 1], cables: [cid], duct: false });
+        used[r[i]] = used[r[i + 1]] = 1;
+      }
+    });
+    feats.forEach(function (f) { if (CH.indexOf(f.props.type) >= 0) used[f.id] = 1; });
+    var ids = Object.keys(used);
+    if (!ids.length) return '<p class="fx-note">No chambers or ducts on the map yet.</p>';
+    // Project to a flat plane, fit to the canvas, then push apart anything closer than a box.
+    var lat0 = ids.reduce(function (t, k) { return t + pos[k].lat; }, 0) / ids.length, k0 = Math.cos(lat0 * Math.PI / 180);
+    var P = {}, minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+    ids.forEach(function (k) { var x = pos[k].lng * k0, y = -pos[k].lat; P[k] = { x: x, y: y }; minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); });
+    var W = 760, H = 560, M = 60, sc = Math.min((W - 2 * M) / ((maxX - minX) || 1), (H - 2 * M) / ((maxY - minY) || 1));
+    ids.forEach(function (k) { P[k].x = M + (P[k].x - minX) * sc; P[k].y = M + (P[k].y - minY) * sc; });
+    for (var it = 0; it < 200; it++) {
+      ids.forEach(function (a) {
+        ids.forEach(function (b) {
+          if (a >= b) return;
+          var dx = P[b].x - P[a].x, dy = P[b].y - P[a].y, d = Math.sqrt(dx * dx + dy * dy) || 0.01, need = 105;
+          if (d < need) {
+            var push = (need - d) / 2 / d;
+            P[a].x -= dx * push; P[a].y -= dy * push; P[b].x += dx * push; P[b].y += dy * push;
+          }
+        });
+      });
+    }
+    minX = 1e9; maxX = -1e9; minY = 1e9; maxY = -1e9;
+    ids.forEach(function (k) { minX = Math.min(minX, P[k].x); maxX = Math.max(maxX, P[k].x); minY = Math.min(minY, P[k].y); maxY = Math.max(maxY, P[k].y); });
+    ids.forEach(function (k) { P[k].x += 50 - minX; P[k].y += 30 - minY; });
+    W = Math.ceil(maxX - minX + 100); H = Math.ceil(maxY - minY + 70);
+    var out = [];
+    edges.forEach(function (e) {
+      var a = P[e.a], b = P[e.b], col = e.cables.length ? '#ffb300' : '#78909c';
+      out.push('<g class="sc-link" ' + (e.duct ? 'data-fx="feature" data-id="' + esc(e.id) + '"' : 'data-fx="cable" data-id="' + esc(e.cables[0]) + '"') + '>' +
+        '<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '" stroke="transparent" stroke-width="14"/>' +
+        '<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '" stroke="' + col + '" stroke-width="' + (e.duct ? 5 : 2) + '" stroke-linecap="round"' + (e.duct ? '' : ' stroke-dasharray="5 4"') + '/>');
+      var mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      var lbl = (e.duct ? '⭕' + (e.n > 1 ? '×' + e.n : '') + ' ' : '') + (e.cables.length ? e.cables.join(' ') : 'empty');
+      out.push('<rect x="' + (mx - lbl.length * 2.9 - 4) + '" y="' + (my - 8) + '" width="' + (lbl.length * 5.8 + 8) + '" height="15" rx="7" fill="#111a22" opacity="0.9"/>' +
+        '<text x="' + mx + '" y="' + (my + 3) + '" text-anchor="middle" font-size="9.5" fill="' + (e.cables.length ? '#ffe082' : '#90a4ae') + '">' + esc(lbl) + '</text></g>');
+    });
+    ids.forEach(function (k) {
+      var f = pos[k], p = P[k], isCh = CH.indexOf(f.props.type) >= 0, nd = net.nodes[k];
+      var act = nd && nd.documented ? 'data-fx="splice" data-node="' + esc(k) + '"' : 'data-fx="feature" data-id="' + esc(k) + '"';
+      out.push('<g class="sc-node sc-link" ' + act + '><rect x="' + (p.x - 34) + '" y="' + (p.y - 13) + '" width="68" height="26" rx="' + (isCh ? 2 : 8) + '" fill="' + (isCh ? '#263238' : '#1e3a5f') +
+        '" stroke="' + (isCh ? '#90a4ae' : '#64b5f6') + '" stroke-width="1.5"/>' +
+        '<text x="' + p.x + '" y="' + (p.y - 1) + '" text-anchor="middle" font-size="10" font-weight="bold" fill="#eceff1">' + esc(short(k, 10)) + '</text>' +
+        '<text x="' + p.x + '" y="' + (p.y + 9) + '" text-anchor="middle" font-size="7.5" fill="#b0bec5">' + esc(short(f.props.name, 16)) + '</text></g>');
+    });
+    return '<div class="fx-schem-wrap"><svg class="fx-schem fit" xmlns="http://www.w3.org/2000/svg" style="max-width:' + W + 'px" viewBox="0 0 ' + W + ' ' + H + '" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">' + out.join('') + '</svg></div>' +
+      '<p class="fx-note">Every chamber and duct, placed roughly where it is and spread out to read. Square grey boxes are chambers, rounded blue boxes enclosures and buildings. Thick lines are duct routes (⭕×2 = two ducts), dashed lines direct runs; amber lines carry the cables named on them, grey ones are empty. Tap anything to open it.</p>';
+  }
+  function showNetworkSchematic() {
+    showView('schematic:network', '📐 Duct network schematic', networkSchematic(), { cls: 'huge' });
   }
 
   // ---- Splice diagram (SVG) ----
@@ -694,6 +860,7 @@
     };
     return window.SiteMap.lineAccuracy(id) + '<p class="fx-sub">' + c.fibres + ' fibres · ' + esc(an) + ' → ' + esc(bn) + '</p>' +
       '<div class="fx-btns">' + ends(c.a, an) + ends(c.b, bn) + '</div>' +
+      '<div class="fx-h">📐 Route</div>' + cableSchematic(id) +
       '<div class="fx-scroll"><table class="fx-table"><tr><th>#</th><th>Colour</th><th>At ' + esc(an) + '</th><th>At ' + esc(bn) + '</th><th>Circuit</th></tr>' + rows + '</table></div>' +
       '<p class="fx-note">Tap a circuit to trace it end to end; its whole path lights up on the map.</p>';
   }
@@ -738,6 +905,7 @@
           .sort(function (a, b) { return (b.documented - a.documented) || a.name.localeCompare(b.name); })
       };
     },
+    showNetworkSchematic: function () { if (net) showNetworkSchematic(); },
     hasCable: function (id) { return !!(net && net.cables[id]); },
     isOpen: function () { return !!(panel && panel.classList.contains('open')) || Object.keys(wins).length > 0; },
     cableOpened: function (id) {

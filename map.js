@@ -369,6 +369,13 @@
       return l ? '<details class="fx-details"><summary>Map details</summary>' + popupHtml(l.feature.properties || {}, null, true, true) + '</details>' : '';
     },
     hasFeature: function (id) { return !!featureById[id]; },
+    // Every map item with an id: its properties and a representative position (point, or centre of a line/area).
+    allFeatures: function () {
+      return Object.keys(featureById).map(function (k) {
+        var l = featureById[k], ll = l.getLatLng ? l.getLatLng() : l.getBounds().getCenter();
+        return { id: k, props: l.feature.properties || {}, lat: ll.lat, lng: ll.lng };
+      });
+    },
     // Duct routes (IDs '<end>-<end>') that start or finish at this chamber or structure.
     ductRoutesAt: function (id) {
       return Object.keys(featureById).filter(function (k) {
@@ -569,7 +576,8 @@
       '<div class="tb-sub">Fibre ends: <b>P</b> patch panel · <b>S</b> splice closure · <b>W</b> wall box · <b>C</b> cabinet · <b>B</b> pedestal · <b>O</b> ONT</div>' +
       '<div class="tb-sub">Icons: 🧵 cable · ⭕ duct · 🕳️ chamber · 📦 box · 🔀 splices · 🧭 circuit · 📍 details</div>' +
       '<div class="tb-sub">Positions are approximate unless surveyed; each popup says how accurate it is.</div>' +
-      '<div class="tb-sub">Last updated ' + UPDATED + '</div>';
+      '<div class="tb-sub">Last updated ' + UPDATED + '</div>' +
+      '<div class="tb-sub tb-build-l">' + esc(buildTip).replace(/\n/g, '<br>') + '</div>';
   }
 
   function layersHtml() {
@@ -673,10 +681,15 @@
 
   var TB = [
     ['layers', '🗂️', 'Layers'], ['chambers', '🕳️', 'Chambers'], ['ducts', '⭕', 'Ducts'],
-    ['enclosures', '🔀', 'Enclosures'], ['cables', '🧵', 'Cables'], ['links', '🧭', 'Circuits'], ['legend', '🔑', 'Legend']
+    ['enclosures', '🔀', 'Enclosures'], ['cables', '🧵', 'Cables'], ['links', '🧭', 'Circuits'], ['schematic', '📐', 'Schematic'], ['legend', '🔑', 'Legend']
   ];
   var bar = L.DomUtil.create('div', 'tb', document.body);
-  bar.innerHTML = '<span class="tb-brand">Llwynygorras</span>' + TB.map(function (b) {
+  // Build info under the name: the source commits of the app code and the data (stamped by scripts/publish-map.sh).
+  function metaOf(n) { var m = document.querySelector('meta[name="' + n + '"]'); return m ? m.getAttribute('content') : 'dev'; }
+  var bApp = metaOf('map-build-app'), bData = metaOf('map-build-data'), bPub = metaOf('map-published');
+  var buildShort = bApp === 'dev' ? 'dev build' : bApp.split(' ').slice(0, 2).join(' ') + ' · ' + bData.split(' ').slice(0, 2).join(' ');
+  var buildTip = bApp === 'dev' ? 'Local preview (not published)' : 'App code: commit ' + bApp.split(' ').slice(1).join(', ') + '\nData: commit ' + bData.split(' ').slice(1).join(', ') + '\nPublished: ' + bPub + ' (UK time)';
+  bar.innerHTML = '<span class="tb-brand">Llwynygorras<span class="tb-build" title="' + esc(buildTip) + '">' + esc(buildShort) + '</span></span>' + TB.map(function (b) {
     return '<button class="tb-btn" data-tb="' + b[0] + '" title="' + b[2] + '"><span class="tb-ic">' + b[1] + '</span><span class="tb-lbl">' + b[2] + '</span></button>';
   }).join('') + '<input type="search" class="tb-search" placeholder="🔍 Search assets" aria-label="Search assets" autocomplete="off" spellcheck="false">';
   var dd = L.DomUtil.create('div', 'tb-dd', document.body);
@@ -747,6 +760,7 @@
     var b = e.target.closest('[data-tb]');
     if (!b) return;
     if (b.getAttribute('data-tb') === 'legend') setLegend(!leg.classList.contains('open'));
+    else if (b.getAttribute('data-tb') === 'schematic') { closeDd(); if (window.FibreNet) window.FibreNet.showNetworkSchematic(); }
     else openDd(b.getAttribute('data-tb'));
   });
   // Search: results update as you type; arrow keys move, Enter opens, Escape closes.
