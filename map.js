@@ -198,12 +198,29 @@
     });
   }
 
+  // When each photo was taken (data/photos.json, from scripts/photo-meta.py): EXIF time, or about when it was sent.
+  var PHOTO_META = {};
+  fetch('data/photos.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : {}; })
+    .then(function (d) { PHOTO_META = d || {}; if (window.FxWin) window.FxWin.refresh(); }).catch(function () {});
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  function photoWhen(f, long) {
+    var m = PHOTO_META[f];
+    if (!m || !m.taken) return '';
+    var d = m.taken.split(' ')[0].split('-'), t = m.taken.split(' ')[1] || '';
+    var txt = (+d[2]) + ' ' + MONTHS[+d[1] - 1] + (long ? ' ' + d[0] : '') + (t ? ' ' + t : '');
+    if (!long) return (m.how === 'exif' ? '' : '~') + txt;
+    return (m.how === 'exif' ? 'Taken ' + txt + (m.camera ? ' · ' + m.camera : '') : 'Sent about ' + txt + ' (no EXIF; time it reached the repo)');
+  }
+  window.PhotoWhen = photoWhen;
+
   function thumbsHtml(p) {
     // Photos: a row of small thumbnails; tapping one opens the photo viewer.
     var list = Array.isArray(p.photos) ? p.photos : [];
     var pics = list.map(function (f, i) {
       var src = 'photos/' + encodeURIComponent(f);
-      return '<img class="thumb" src="' + src + '" alt="' + esc((p.name || f) + ' photo ' + (i + 1)) + '" data-photos="' + esc(list.join('|')) + '" data-i="' + i + '" loading="lazy">';
+      var when = photoWhen(f, false);
+      return '<figure class="thumb-fig"><img class="thumb" src="' + src + '" alt="' + esc((p.name || f) + ' photo ' + (i + 1)) + '" title="' + esc(photoWhen(f, true)) + '" data-photos="' + esc(list.join('|')) + '" data-i="' + i + '" loading="lazy">' +
+        (when ? '<figcaption>' + esc(when) + '</figcaption>' : '') + '</figure>';
     }).join('');
     return pics ? '<div class="thumbs">' + pics + '</div>' : '';
   }
@@ -313,7 +330,7 @@
   var viewer = null, vList = [], vI = 0;
   function showPhoto() {
     viewer.querySelector('img').src = 'photos/' + encodeURIComponent(vList[vI]);
-    viewer.querySelector('.pv-count').textContent = (vI + 1) + ' / ' + vList.length;
+    viewer.querySelector('.pv-count').textContent = (vI + 1) + ' / ' + vList.length + (photoWhen(vList[vI], true) ? ' · ' + photoWhen(vList[vI], true) : '');
     viewer.querySelector('.pv-full').href = 'photos/' + encodeURIComponent(vList[vI]);
     viewer.classList.toggle('single', vList.length < 2);
   }

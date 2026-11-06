@@ -300,3 +300,5 @@ body.panel-open .tb-dd { left: auto; }
 .fx-schem.fit { width: 100%; min-width: 560px; height: auto; }
 @media (min-width: 701px) { .tb-brand { display: flex; flex-direction: column; line-height: 1.15; } }
 .tb-build { font-size: 9.5px; font-weight: 400; color: #90a4ae; letter-spacing: 0; font-family: ui-monospace, Menlo, monospace; cursor: help; }
+.thumb-fig { margin: 0; display: flex; flex-direction: column; align-items: center; }
+.thumb-fig figcaption { font-size: 10px; color: #90a4ae; margin-top: 2px; white-space: nowrap; }
