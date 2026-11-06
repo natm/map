@@ -101,7 +101,7 @@
       "name": "Woods cabinet (1U splice tray enclosure)",
       "where": "1U splice tray enclosure in a cabinet next to MH12 in the woods (\"pole in woods\" on the 2 The Cottage label)",
       "documented": true,
-      "notes": "F04's 8 fibres are spliced in order to LC 1–8 (Nat). All 24 F03 fibres (from the shed) are also spliced to LC connectors on this same 1U panel (Nat, 2026-11-06); their port numbers aren't recorded yet, so they aren't in this model. How F03 and F04 ports are patched together is not yet recorded.",
+      "notes": "F04's 8 fibres are spliced in order to LC 1–8, and F03's 24 fibres in order to LC 36–59 (Nat, 2026-11-06). LC 9–35 not recorded. The patch leads linking F03 ports to F04's LC 1–8 are not yet recorded.",
       "patching_documented": false,
       "layout": {
         "left": [
@@ -114,11 +114,12 @@
       "panels": [
         {
           "id": "P",
-          "name": "1U splice tray enclosure, LC (at least 32: F04's 8 plus F03's 24)",
-          "ports": 8,
+          "name": "1U splice tray enclosure, LC (at least 59 ports)",
+          "ports": 59,
           "connector": "LC/UPC",
           "labels": {
-            "1-8": "F04 to 2 The Cottage"
+            "1-8": "F04 to 2 The Cottage",
+            "36-59": "F03 to the shed"
           }
         }
       ],
@@ -128,6 +129,12 @@
           "a": "F04:1-8",
           "b": "P:1-8",
           "note": "Strand n on LC n (Nat, 2026-11-06)"
+        },
+        {
+          "kind": "splice",
+          "a": "F03:1-24",
+          "b": "P:36-59",
+          "note": "F03 fibre n on LC 35+n (Nat, 2026-11-06)"
         }
       ]
     },

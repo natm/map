@@ -391,7 +391,7 @@
       });
     });
 
-    var head = svgText(W / 2, 18, (node.name || nid) + (node.where ? ' · ' + node.where : ''), { anchor: 'middle', bold: true, size: 12 });
+    var head = svgText(8, 18, node.name || nid, { bold: true, size: 12 });
     var legend = svgText(8, H - 10, 'Coloured lines: fusion splices (□ = splice, T = tray) · thick lines: express fibres, not cut · yellow loops: LC patch leads · dashed: assumed', { size: 10, fill: '#666' });
     return '<svg class="fx-svg" xmlns="http://www.w3.org/2000/svg" style="max-width:' + W + 'px" viewBox="0 0 ' + W + ' ' + H +
       '" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">' + '<rect width="100%" height="100%" fill="#fff"/>' + head + lines.join('') + out.join('') + arcs.join('') + legend + '</svg>';
