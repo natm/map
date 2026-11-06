@@ -592,6 +592,19 @@
         return '<a href="#feature=' + esc(k) + '" class="tb-item tb-line"><b>🕳️ ' + esc(k) + '</b><span class="tb-name">' + esc(p.name || '') + '</span><span class="tb-meta">' + esc([p.owner, p.size_mm ? p.size_mm + ' mm' : ''].filter(Boolean).join(' · ')) + '</span></a>';
       }).join('') || '<div class="tb-sub">No chambers yet.</div>';
     }
+    if (kind === 'ducts') {
+      // Every duct, grouped by route: size, colour and type, and the cables recorded in it.
+      var rows = [];
+      Object.keys(featureById).sort(function (a, b) { return a.localeCompare(b, undefined, { numeric: true }); }).forEach(function (k) {
+        var p = featureById[k].feature.properties || {};
+        (p.ducts || []).forEach(function (d) {
+          var cs = window.FibreNet && window.FibreNet.cablesInDuct ? window.FibreNet.cablesInDuct(d.id) : '';
+          rows.push('<a href="#" class="tb-item tb-line" data-fx="feature" data-id="' + esc(d.id) + '"><b>⭕ ' + esc(d.id) + '</b><span class="tb-name">' +
+            esc([d.od_mm ? d.od_mm + ' mm' : '', d.colour, d.type].filter(Boolean).join(' ')) + '</span><span class="tb-meta">' + esc(cs ? '🧵 ' + cs : 'empty') + '</span></a>');
+        });
+      });
+      return rows.join('') || '<div class="tb-sub">No ducts yet.</div>';
+    }
     if (!F) return '<div class="tb-sub">Loading…</div>';
     if (kind === 'links') return F.circuits.map(function (c) {
       return '<a href="#" class="tb-item tb-line" data-fx="trace" data-circuit="' + esc(c.id) + '"><b class="tb-name">🧭 ' + esc(c.name) + '</b><span class="tb-meta">' + esc(window.FibreCircuitInfo ? window.FibreCircuitInfo(c) : '') + '</span></a>';
@@ -659,8 +672,8 @@
   }
 
   var TB = [
-    ['layers', '🗂️', 'Layers'], ['links', '🧭', 'Circuits'], ['cables', '🧵', 'Cables'],
-    ['enclosures', '🔀', 'Enclosures'], ['chambers', '🕳️', 'Chambers'], ['legend', '🔑', 'Legend']
+    ['layers', '🗂️', 'Layers'], ['chambers', '🕳️', 'Chambers'], ['ducts', '⭕', 'Ducts'],
+    ['enclosures', '🔀', 'Enclosures'], ['cables', '🧵', 'Cables'], ['links', '🧭', 'Circuits'], ['legend', '🔑', 'Legend']
   ];
   var bar = L.DomUtil.create('div', 'tb', document.body);
   bar.innerHTML = '<span class="tb-brand">Llwynygorras</span>' + TB.map(function (b) {
@@ -677,6 +690,30 @@
     var body = kind === 'search' ? searchHtml(sbox.value) : kind === 'legend' ? legendHtml() : kind === 'layers' ? layersHtml() : '<div class="tb-list">' + listHtml(kind) + '</div>';
     dd.innerHTML = '<div class="tb-dd-head">' + b[1] + ' ' + b[2] + '<button class="tb-x" title="Close">&times;</button></div><div class="tb-dd-body">' + body + '</div>';
     dd.classList.add('open');
+    // Drop down under the button (or the search box), like a normal menu, kept on screen.
+    var anchor = kind === 'search' ? sbox : bar.querySelector('[data-tb="' + kind + '"]');
+    if (anchor) {
+      var r = anchor.getBoundingClientRect(), w = dd.offsetWidth;
+      var left = kind === 'search' ? r.right - w : r.left;
+      dd.style.left = Math.max(6, Math.min(window.innerWidth - w - 6, left)) + 'px';
+    }
+    // List menus get a filter box: type to narrow the list; arrows and Enter pick, Esc closes.
+    if (['links', 'cables', 'enclosures', 'chambers', 'ducts'].indexOf(kind) >= 0) {
+      var fb = document.createElement('input');
+      fb.type = 'search'; fb.className = 'tb-filter'; fb.placeholder = 'Type to filter…'; fb.setAttribute('aria-label', 'Filter ' + b[2]);
+      dd.querySelector('.tb-dd-body').insertBefore(fb, dd.querySelector('.tb-dd-body').firstChild);
+      fb.addEventListener('input', function () {
+        var words = fb.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        Array.prototype.forEach.call(dd.querySelectorAll('.tb-list > .tb-item'), function (row) {
+          var t = row.textContent.toLowerCase();
+          row.style.display = words.every(function (w2) { return t.indexOf(w2) >= 0; }) ? '' : 'none';
+        });
+        sSel = 0; markSel();
+      });
+      fb.addEventListener('keydown', listKeys);
+      if (window.innerWidth > 700) fb.focus();   // not on phones, where it would pop up the keyboard
+      sSel = 0; markSel();
+    }
     Array.prototype.forEach.call(bar.querySelectorAll('.tb-btn'), function (x) { if (x.getAttribute('data-tb') !== 'legend') x.classList.toggle('on', x.getAttribute('data-tb') === kind); });
     dd.querySelector('.tb-x').addEventListener('click', closeDd);
     if (kind === 'layers') {
@@ -717,20 +754,27 @@
   function showSearch() {
     ddOpen = null; openDd('search'); sSel = 0; markSel();
   }
+  function visRows() {
+    return Array.prototype.filter.call(dd.querySelectorAll('.tb-list > .tb-item'), function (r) { return r.style.display !== 'none'; });
+  }
   function markSel() {
-    var rows = dd.querySelectorAll('.tb-list > a.tb-item');
-    Array.prototype.forEach.call(rows, function (r, i) { r.classList.toggle('sel', i === sSel); });
-    if (rows[sSel]) rows[sSel].scrollIntoView({ block: 'nearest' });
+    Array.prototype.forEach.call(dd.querySelectorAll('.tb-list > .tb-item'), function (r) { r.classList.remove('sel'); });
+    var rows = visRows();
+    if (rows[sSel]) { rows[sSel].classList.add('sel'); rows[sSel].scrollIntoView({ block: 'nearest' }); }
+  }
+  function listKeys(e) {
+    var rows = visRows();
+    if (e.key === 'ArrowDown') { sSel = Math.min(rows.length - 1, sSel + 1); markSel(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { sSel = Math.max(0, sSel - 1); markSel(); e.preventDefault(); }
+    else if (e.key === 'Enter') {
+      var r = rows[sSel];
+      if (r) { var t = r.matches('a, [data-fx]') ? r : r.querySelector('a, [data-fx]'); if (t) t.click(); e.target.blur(); }
+      e.preventDefault();
+    } else if (e.key === 'Escape') { closeDd(); e.target.blur(); }
   }
   sbox.addEventListener('input', showSearch);
   sbox.addEventListener('focus', function () { if (ddOpen !== 'search') showSearch(); });
-  sbox.addEventListener('keydown', function (e) {
-    var rows = dd.querySelectorAll('.tb-list > a.tb-item');
-    if (e.key === 'ArrowDown') { sSel = Math.min(rows.length - 1, sSel + 1); markSel(); e.preventDefault(); }
-    else if (e.key === 'ArrowUp') { sSel = Math.max(0, sSel - 1); markSel(); e.preventDefault(); }
-    else if (e.key === 'Enter') { if (rows[sSel]) { rows[sSel].click(); sbox.blur(); } e.preventDefault(); }
-    else if (e.key === 'Escape') { closeDd(); sbox.blur(); }
-  });
+  sbox.addEventListener('keydown', listKeys);
   // Choosing something in a list closes the drop-down (the trace, cable view or popup then opens).
   dd.addEventListener('click', function (e) { if (e.target.closest('.tb-item a, a.tb-item, .tb-item[data-fx]')) setTimeout(closeDd, 0); });
 })();

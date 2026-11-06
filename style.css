@@ -278,3 +278,12 @@ a.tb-item:hover, .tb-item:hover { border-color: var(--accent); }
 .fx-details summary { cursor: pointer; color: #90a4ae; font-size: 12px; }
 .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel); color: var(--ink); }
 .fx-h { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #90a4ae; font-weight: 600; margin: 10px 0 4px; }
+.tb-dd { top: 44px; transform: none; border-radius: 0 0 10px 10px; border-top: 0; max-height: calc(100vh - 56px); }
+body.panel-open .tb-dd { left: auto; }
+.tb-filter { width: 100%; box-sizing: border-box; margin: 0 0 6px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel2); color: var(--ink);
+  padding: 5px 9px; font: 13px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; outline: none; }
+.tb-filter:focus { border-color: var(--accent); }
+@media (max-width: 700px) { .tb-filter { font-size: 16px; } }
+/* Legend sits on the right, against the search box */
+.tb-btn[data-tb="legend"] { margin-left: auto; }
+.tb-search { margin-left: 0; }
