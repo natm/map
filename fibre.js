@@ -360,6 +360,11 @@
       out.push(svgText(x + MW / 2, y + 15, label.length > 44 ? label.slice(0, 42) + '…' : label, { anchor: 'middle', bold: true, size: 10 }));
       rows.forEach(function (r, i) {
         var ry = y + HH + i * RH;
+        if (r.gap) {
+          out.push('<rect x="' + x + '" y="' + ry + '" width="' + MW + '" height="' + RH + '" fill="#f3f3f3" stroke="#ccc" stroke-width="0.5"/>' +
+            svgText(x + 13, ry + 12, '⋮', { anchor: 'middle', size: 11, fill: '#888' }) + svgText(x + 26 + 6, ry + 12, r.text.replace(/^⋮\s*/, ''), { size: 10, fill: '#888' }));
+          return;
+        }
         // [socket n][port description ........][patch lane]: splices arrive on the left edge, patch leads loop on the right.
         out.push('<g class="fxe row" data-c="' + cOf(r.keyRear || r.keyFront) + '">' +
           '<rect class="rowbg" x="' + (x + 26) + '" y="' + ry + '" width="' + (MW - 26 - LANE) + '" height="' + RH + '" fill="#fff"/>' +
@@ -381,7 +386,25 @@
       var labels = {};
       Object.keys(p.labels || {}).forEach(function (r) { parseRef('x:' + r).list.forEach(function (n) { labels[n] = p.labels[r]; }); });
       var rows = [];
-      for (var i = 1; i <= p.ports; i++) rows.push({ n: i, text: labels[i] || '', keyRear: key(nid, 'R', p.id, i), keyFront: key(nid, 'T', p.id, i) });
+      // A port is in use if something is spliced or patched to it, or it has a label.
+      var usedPort = function (n) {
+        if (labels[n]) return true;
+        return [key(nid, 'R', p.id, n), key(nid, 'T', p.id, n)].some(function (kk) {
+          return (adj[kk] || []).some(function (x) { return x.e.t !== 'port'; });
+        });
+      };
+      // Runs of more than 4 unused ports collapse to: first 2, a "⋮" row, last 2.
+      var n0 = 1;
+      while (n0 <= p.ports) {
+        if (usedPort(n0)) { rows.push({ n: n0, text: labels[n0] || '', keyRear: key(nid, 'R', p.id, n0), keyFront: key(nid, 'T', p.id, n0) }); n0++; continue; }
+        var n1 = n0; while (n1 + 1 <= p.ports && !usedPort(n1 + 1)) n1++;
+        var run = n1 - n0 + 1;
+        for (var q = n0; q <= n1; q++) {
+          if (run > 4 && q === n0 + 2) { rows.push({ gap: true, text: '⋮  ' + (n0 + 2) + '–' + (n1 - 2) + ' not used (' + (run - 4) + ')' }); q = n1 - 1; }
+          rows.push({ n: q, text: '', keyRear: key(nid, 'R', p.id, q), keyFront: key(nid, 'T', p.id, q) });
+        }
+        n0 = n1 + 1;
+      }
       ym += midBox(p.name, rows, xM, ym, 'P') + GAP;
     });
     devices.forEach(function (d) {
