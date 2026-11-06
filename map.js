@@ -8,16 +8,16 @@
   var CENTRE = [51.938686, -5.067480];
   var DOC_BASE = 'https://github.com/natm/llwyngorras-home/blob/main/';
 
-  var map = L.map('map', { center: CENTRE, zoom: 19, maxZoom: 21, zoomControl: true });
+  var map = L.map('map', { center: CENTRE, zoom: 19, maxZoom: 24, zoomControl: true });
 
   // ---- Base layers ----
   var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 21,
+    maxZoom: 24,
     maxNativeZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   });
   var aerial = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 21,
+    maxZoom: 24,
     maxNativeZoom: 19,
     attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Vantor/Maxar, Earthstar Geographics, and the GIS User Community'
   });
