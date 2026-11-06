@@ -68,18 +68,15 @@
         "name": "Duct route MH08 to MH09 (Behind wall to Greenhouse)",
         "type": "duct",
         "ducts": [{"id": "MH08-MH09/1", "od_mm": 63, "type": "twinwall", "colour": "black"}],
-        "notes": "Duct route between MH08 and MH09: 1 duct (63 mm black twinwall). ⚠️ Drawn as a straight line between the two chambers: the duct's real path is not known and needs surveying. Cables in it not yet recorded.",
+        "notes": "Duct route between MH08 and MH09: 1 duct (63 mm black twinwall). Path drawn by Nat in map edit mode 2026-11-06 (by eye on the aerial, 5 bend(s), 19.7 m). Cables in it not yet recorded.",
         "doc": "fibre.md#-ducts",
-        "source": "Nat (2026-11-06): which chambers are joined, size and type; path not known",
-        "method": "assumed",
+        "source": "Nat (2026-11-06): which chambers are joined, size and type; path drawn by Nat in map edit mode 2026-11-06",
+        "method": "aerial-trace", "accuracy_m": 2,
         "surveyed": "2026-11-06"
       },
       "geometry": {
         "type": "LineString",
-        "coordinates": [
-          [-5.066631, 51.938726],
-          [-5.066375, 51.93878]
-        ]
+        "coordinates": [[-5.066631, 51.938726], [-5.066577, 51.938753], [-5.066538, 51.938753], [-5.066484, 51.938755], [-5.066426, 51.938756], [-5.066402, 51.93876], [-5.066375, 51.93878]]
       }
     },
     {
