@@ -323,3 +323,19 @@ body.editing .leaflet-marker-icon { cursor: move; }
 .tb-btn[data-tb="edit"]:not(.on) { background: transparent; color: #90a4ae; border: 1px solid var(--line); }
 .tb-btn[data-tb="edit"]:not(.on):hover { color: var(--ink); border-color: #90a4ae; filter: none; }
 .fx-id { display: inline-block; padding: 0 7px; margin-right: 2px; border-radius: 9px; background: #1e88e5; color: #fff; font-size: 11.5px; font-weight: 700; letter-spacing: .02em; vertical-align: 1px; }
+
+/* All splices (in use only): compact diagrams side by side, wrapping to fill the window */
+.fx-allsp-grid { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-start; }
+.fx-allsp { flex: 0 1 auto; max-width: 100%; }
+.fx-allsp .fx-btns { margin: 4px 0 4px !important; }
+
+/* Zoom / pan canvas (All splices) */
+.fx-zoom-bar { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; margin: 0 0 6px; }
+.fx-zoom-btns { display: flex; gap: 4px; align-items: center; }
+.fx-zoom-btns .fx-btn { min-width: 30px; margin: 0; }
+.fx-zoom-pct { min-width: 42px; text-align: center; font-size: 12px; color: #b0bec5; }
+.fx-zoom-vp { position: relative; overflow: hidden; height: 62vh; border: 1px solid #37474f; border-radius: 6px; background: #1b2730; touch-action: none; cursor: grab; }
+.fx-zoom-vp.panning { cursor: grabbing; }
+.fx-zoom-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; padding: 4px; box-sizing: border-box; }
+.fx-win.zoomable .fx-win-body { display: flex; flex-direction: column; overflow: hidden; }
+.fx-win.zoomable .fx-zoom-vp { flex: 1; height: auto; min-height: 0; }

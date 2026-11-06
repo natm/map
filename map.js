@@ -671,9 +671,11 @@
     }
     if (!F) return '<div class="tb-sub">Loading…</div>';
     if (kind === 'schematic') {
-      // All three schematic views: the whole duct network, each circuit, and each cable's route.
+      // Schematic views: the whole duct network, all splices (in use only), each circuit, and each cable's route.
       return '<div class="tb-h">Duct network</div>' +
         '<a href="#" class="tb-item tb-line" data-fx="schem-net"><b>📐 Duct network</b><span class="tb-name">every chamber, enclosure and duct</span></a>' +
+        '<div class="tb-h">Splices</div>' +
+        '<a href="#" class="tb-item tb-line" data-fx="schem-splices"><b>🔀 All splices</b><span class="tb-name">every enclosure on one screen, in-use fibres only</span></a>' +
         '<div class="tb-h">Circuits</div>' + F.circuits.map(function (c) {
           return '<a href="#" class="tb-item tb-line" data-fx="schem-circuit" data-circuit="' + esc(c.id) + '"><b class="tb-name">🧭 ' + esc(c.name) + '</b><span class="tb-meta">' + esc(window.FibreCircuitInfo ? window.FibreCircuitInfo(c) : '') + '</span></a>';
         }).join('') +

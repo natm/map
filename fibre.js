@@ -472,6 +472,138 @@
     showView('schematic:network', '📐 Duct network schematic', networkSchematic(), { cls: 'huge' });
   }
 
+  // All splices on one screen, compact: every documented enclosure, showing only fibres and ports in use.
+  // Enclosures are ordered outward along the cables from the best-connected one (the barn).
+  function allSplicesOrder() {
+    var ids = Object.keys(net.nodes).filter(function (id) { return net.nodes[id].documented; });
+    var deg = {};
+    Object.keys(net.cables).forEach(function (cid) { var c = net.cables[cid]; deg[c.a] = (deg[c.a] || 0) + 1; deg[c.b] = (deg[c.b] || 0) + 1; });
+    var start = ids.slice().sort(function (a, b) { return (deg[b] || 0) - (deg[a] || 0); })[0];
+    var seen = {}, order = [], queue = start ? [start] : [];
+    while (queue.length) {
+      var n = queue.shift();
+      if (seen[n]) continue;
+      seen[n] = 1; order.push(n);
+      Object.keys(net.cables).forEach(function (cid) {
+        var c = net.cables[cid];
+        if (c.a === n && !seen[c.b]) queue.push(c.b);
+        if (c.b === n && !seen[c.a]) queue.push(c.a);
+      });
+    }
+    return order.filter(function (id) { return ids.indexOf(id) >= 0; }).concat(ids.filter(function (id) { return !seen[id]; }));
+  }
+  function allSplicesHtml() {
+    var order = allSplicesOrder();
+    if (!order.length) return '<p class="fx-note">No enclosures documented yet.</p>';
+    var skipped = Object.keys(net.nodes).filter(function (id) { return !net.nodes[id].documented; }).map(function (id) { return net.nodes[id].name || id; });
+    return '<div class="fx-zoom-bar"><span class="fx-sub">In use only: spare fibres and empty ports hidden. Scroll or pinch to zoom, drag to pan, hover or tap a path to follow it.</span>' +
+      '<span class="fx-zoom-btns"><button class="fx-btn small" data-z="out" title="Zoom out">−</button><span class="fx-zoom-pct">100%</span><button class="fx-btn small" data-z="in" title="Zoom in">+</button>' +
+      '<button class="fx-btn small" data-z="fit" title="Fit everything in the window">Fit</button><button class="fx-btn small" data-z="one" title="Actual size">1:1</button></span></div>' +
+      '<div class="fx-zoom-vp"><div class="fx-zoom-stage">' +
+      '<div class="fx-allsp-grid">' + order.map(function (nid) {
+        return '<div class="fx-allsp"><div class="fx-btns" style="margin:10px 0 4px"><button class="fx-btn small" data-fx="splice" data-node="' + esc(nid) + '">🔀 Full diagram: ' + esc(net.nodes[nid].name || nid) + '</button></div>' +
+          '<div class="fx-scroll">' + spliceSvg(nid, { compact: true }) + '</div></div>';
+      }).join('') + '</div>' +
+      (skipped.length ? '<p class="fx-note">❓ Not documented yet: ' + skipped.map(esc).join(', ') + '.</p>' : '') +
+      '<p class="fx-note">Coloured lines: fusion splices (□ = splice, T = tray) · thick lines: express fibres, not cut · yellow loops: LC patch leads · dashed: assumed.</p>' +
+      '</div></div>';
+  }
+
+  // Zoom and pan for a .fx-zoom-vp viewport: wheel or pinch zooms about the pointer, drag pans
+  // (a drag doesn't count as a click), buttons for in / out / fit / actual size. Opens fitted.
+  function wireZoom(root) {
+    var vp = root.querySelector('.fx-zoom-vp'), st = vp && vp.querySelector('.fx-zoom-stage');
+    if (!st || vp._zoom) return;
+    vp._zoom = true;
+    var pct = root.querySelector('.fx-zoom-pct');
+    var sc = 1, tx = 0, ty = 0, touched = false;
+    // Choose how wide the grid wraps so the whole thing fits the viewport at the largest scale.
+    function layout() {
+      var vw = vp.clientWidth - 8, vh = vp.clientHeight - 8, best = null;
+      for (var w = Math.max(400, vw * 0.6); w <= vw * 4; w *= 1.15) {
+        st.style.width = Math.round(w) + 'px';
+        var s0 = Math.min(1, vw / st.offsetWidth, vh / st.offsetHeight);
+        if (!best || s0 > best.s + 0.005) best = { w: Math.round(w), s: s0 };
+      }
+      st.style.width = best.w + 'px';
+    }
+    function apply() {
+      st.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + sc + ')';
+      if (pct) pct.textContent = Math.round(sc * 100) + '%';
+    }
+    function zoomAt(f, cx, cy) {
+      var ns = Math.min(4, Math.max(0.1, sc * f));
+      f = ns / sc; tx = cx - (cx - tx) * f; ty = cy - (cy - ty) * f; sc = ns; apply();
+    }
+    function fit() {
+      var w = st.offsetWidth, h = st.offsetHeight;
+      sc = Math.min(1, (vp.clientWidth - 8) / w, (vp.clientHeight - 8) / h);
+      tx = Math.max(4, (vp.clientWidth - w * sc) / 2); ty = 4; apply();
+    }
+    function centre() { return { x: vp.clientWidth / 2, y: vp.clientHeight / 2 }; }
+    root.querySelector('.fx-zoom-btns').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-z]'); if (!b) return;
+      touched = true;
+      var z = b.getAttribute('data-z'), c = centre();
+      if (z === 'in') zoomAt(1.25, c.x, c.y);
+      if (z === 'out') zoomAt(0.8, c.x, c.y);
+      if (z === 'fit') fit();
+      if (z === 'one') { tx = 4; ty = 4; sc = 1; apply(); }
+    });
+    vp.addEventListener('wheel', function (e) {
+      e.preventDefault(); touched = true;
+      var r = vp.getBoundingClientRect();
+      zoomAt(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015)), e.clientX - r.left, e.clientY - r.top);
+    }, { passive: false });
+    // Pointers: one drags, two pinch.
+    var pts = {}, start = null, moved = false;
+    function list() { return Object.keys(pts).map(function (k) { return pts[k]; }); }
+    vp.addEventListener('pointerdown', function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      var p = list();
+      start = p.length === 2 ? { d: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y), sc: sc, tx: tx, ty: ty, mx: (p[0].x + p[1].x) / 2, my: (p[0].y + p[1].y) / 2 }
+        : { x: e.clientX, y: e.clientY, tx: tx, ty: ty };
+      moved = false;
+    });
+    vp.addEventListener('pointermove', function (e) {
+      if (!pts[e.pointerId] || !start) return;
+      pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      var p = list(), r = vp.getBoundingClientRect();
+      if (p.length === 2 && start.d) {
+        var d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
+        var mx = (p[0].x + p[1].x) / 2, my = (p[0].y + p[1].y) / 2;
+        sc = start.sc; tx = start.tx + (mx - start.mx); ty = start.ty + (my - start.my);
+        zoomAt(d / start.d, mx - r.left, my - r.top);
+        moved = touched = true;
+        return;
+      }
+      if (start.x === undefined) return;
+      var dx = e.clientX - start.x, dy = e.clientY - start.y;
+      if (!moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+      if (!moved) { moved = touched = true; try { vp.setPointerCapture(e.pointerId); } catch (x) {} vp.classList.add('panning'); }
+      tx = start.tx + dx; ty = start.ty + dy; apply();
+    });
+    function up(e) {
+      delete pts[e.pointerId];
+      var p = list();
+      start = p.length === 1 ? { x: p[0].x, y: p[0].y, tx: tx, ty: ty } : null;
+      vp.classList.remove('panning');
+    }
+    vp.addEventListener('pointerup', up);
+    vp.addEventListener('pointercancel', up);
+    // A drag ends with a click on whatever is under the pointer: swallow it.
+    vp.addEventListener('click', function (e) { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+    // Refit when the window is resized, until the user has zoomed or panned.
+    if (window.ResizeObserver) new ResizeObserver(function () { if (!touched && vp.clientWidth) { layout(); fit(); } }).observe(vp);
+    requestAnimationFrame(function () { layout(); fit(); });
+  }
+  function showAllSplices() {
+    var sb = showView('schematic:splices', { icon: '📐', name: 'All splices (in use only)' }, allSplicesHtml(), { cls: 'huge zoomable' });
+    wirePatchHover(sb.parentNode || sb);
+    wireZoom(sb);
+  }
+
   // ---- Splice diagram (SVG) ----
   var RH = 13, HH = 17, GAP = 8;   // compact: row height, header height, gap between blocks
 
@@ -490,7 +622,10 @@
     return u;
   }
 
-  function spliceSvg(nid) {
+  // opt.compact: only what's in use (spliced, patched or through fibres; used panel and device ports); spare ones are left out.
+  function spliceSvg(nid, opt) {
+    opt = opt || {};
+    var compact = !!opt.compact;
     var node = net.nodes[nid];
     // Connected paths inside this enclosure (splices, port pass-through, patches), so hovering any part
     // of a path can highlight all of it: fibre, splice, socket, port label, patch lead, device port.
@@ -505,6 +640,20 @@
         (adj[kk] || []).forEach(function (x) { if (x.e.t !== 'cable' && comp[x.to] === undefined) stack.push(x.to); });
       }
     });
+    // Compact view: a connected path here is "live" if it goes somewhere: it has a patch lead, reaches a
+    // device port, or joins two cable fibres (splice or express). Fibres spliced to a panel port with
+    // nothing patched beyond are dead ends and are hidden, as are labelled but empty ports.
+    var live = {};
+    if (compact) {
+      var fibresIn = {};
+      Object.keys(comp).forEach(function (k) {
+        var q = parseKey(k), c = comp[k];
+        if (q.t === 'C') fibresIn[c] = (fibresIn[c] || 0) + 1;
+        if ((adj[k] || []).some(function (x) { return x.e.t === 'patch' || parseKey(x.to).t === 'D'; })) live[c] = true;
+      });
+      Object.keys(fibresIn).forEach(function (c) { if (fibresIn[c] >= 2) live[c] = true; });
+    }
+    function isLive(k) { return comp[k] !== undefined && !!live[comp[k]]; }
     function cOf(k) { return gpath[k] !== undefined ? gpath[k] : nid + '-' + (comp[k] !== undefined ? comp[k] : (comp[k] = nextComp++)); }
     var cablesHere = Object.keys(net.cables).filter(function (id) { return net.cables[id].a === nid || net.cables[id].b === nid; });
     var lay = node.layout || {};
@@ -538,11 +687,17 @@
     var anchor = {};   // graph key -> {x, y, side}
     var out = [], lines = [], arcs = [];
     var u = used(nid);
+    if (compact) {   // cables with nothing in use here drop out altogether
+      var anyUsed = function (id) { for (var i = 1; i <= net.cables[id].fibres; i++) if (isLive(key(nid, 'C', id, i))) return true; return false; };
+      left = left.filter(anyUsed); right = right.filter(anyUsed);
+    }
 
     function cableTable(id, x, y, side) {
       var c = net.cables[id], other = c.a === nid ? c.b : c.a;
       var ts = c.tube_size || 12;
-      var h = HH + c.fibres * RH;
+      var shown = [];   // fibre numbers drawn, in order
+      for (var f = 1; f <= c.fibres; f++) if (!compact || isLive(key(nid, 'C', id, f))) shown.push(f);
+      var h = HH + shown.length * RH;
       // Header: cable ID, size and where its other end goes
       var on = (net.nodes[other] || {}).name || other;
       if (on.length > 15) on = on.slice(0, 14) + '…';
@@ -554,21 +709,24 @@
         (act ? '<tspan class="fx-svglink" ' + act + '>' + esc(on) + (od ? ' 🔀' : ' 📍') + '</tspan>' : '<tspan>' + esc(on) + '</tspan>') + '</text>');
       // Sheath: one rounded block per tube, in the tube colour (grey for a single-tube cable)
       var sx = side === 'L' ? x : x + TW - 16;
-      for (var t = 0; t * ts < c.fibres; t++) {
-        var n0 = t * ts, n1 = Math.min(c.fibres, n0 + ts);
+      // (compact: one block per run of shown fibres from the same tube)
+      for (var j0 = 0; j0 < shown.length;) {
+        var t = Math.floor((shown[j0] - 1) / ts), j1 = j0;
+        while (j1 + 1 < shown.length && Math.floor((shown[j1 + 1] - 1) / ts) === t) j1++;
         var tc = c.fibres > ts ? COLOURS[t % 12][1] : '#b0bec5';
-        out.push('<rect x="' + sx + '" y="' + (y + HH + n0 * RH - 2) + '" width="16" height="' + ((n1 - n0) * RH + 4) + '" rx="6" fill="' + tc + '" stroke="#455a64"/>');
+        out.push('<rect x="' + sx + '" y="' + (y + HH + j0 * RH - 2) + '" width="16" height="' + ((j1 - j0 + 1) * RH + 4) + '" rx="6" fill="' + tc + '" stroke="#455a64"/>');
+        j0 = j1 + 1;
       }
       // Fibre pills
       var px = side === 'L' ? x + 18 : x, pw = TW - 18;
-      for (var i = 1; i <= c.fibres; i++) {
-        var fc = fibreColour(c, i), ry = y + HH + (i - 1) * RH;
+      shown.forEach(function (i, j) {
+        var fc = fibreColour(c, i), ry = y + HH + j * RH;
         var k = key(nid, 'C', id, i), isUsed = !!u[k];
         out.push('<g class="fxe" data-c="' + cOf(k) + '"><rect class="pill" x="' + px + '" y="' + (ry + 1) + '" width="' + pw + '" height="' + (RH - 2) + '" rx="4" fill="' + fc.hex + '" stroke="#333" stroke-width="0.6"' +
           (isUsed ? '' : ' fill-opacity="0.35"') + '/>' +
           svgText(px + pw / 2, ry + 10, i + ' ' + fc.name + (isUsed ? '' : ' (spare)'), { anchor: 'middle', fill: LIGHT[fc.name] || !isUsed ? '#222' : '#fff', size: 9 }) + '</g>');
         anchor[k] = { x: side === 'L' ? x + TW : x, y: ry + RH / 2, side: side };
-      }
+      });
       return h;
     }
 
@@ -615,6 +773,7 @@
       // Runs of more than 4 unused ports collapse to: first 2, a "⋮" row, last 2.
       var n0 = 1;
       while (n0 <= p.ports) {
+        if (compact && !isLive(key(nid, 'R', p.id, n0)) && !isLive(key(nid, 'T', p.id, n0))) { n0++; continue; }
         if (usedPort(n0)) { rows.push({ n: n0, text: labels[n0] || '', keyRear: key(nid, 'R', p.id, n0), keyFront: key(nid, 'T', p.id, n0) }); n0++; continue; }
         var n1 = n0; while (n1 + 1 <= p.ports && !usedPort(n1 + 1)) n1++;
         var run = n1 - n0 + 1;
@@ -624,11 +783,13 @@
         }
         n0 = n1 + 1;
       }
-      ym += midBox(p.name, rows, xM, ym, 'P') + GAP;
+      if (rows.length) ym += midBox(p.name, rows, xM, ym, 'P') + GAP;
     });
     devices.forEach(function (d) {
-      var rows = (d.ports || []).map(function (pt) { return { n: '', text: pt, keyRear: key(nid, 'D', d.id, pt), keyFront: key(nid, 'D', d.id, pt) }; });
-      ym += midBox(d.name, rows, xM, ym, 'D') + GAP;
+      var rows = (d.ports || []).filter(function (pt) {
+        return !compact || isLive(key(nid, 'D', d.id, pt));
+      }).map(function (pt) { return { n: '', text: pt, keyRear: key(nid, 'D', d.id, pt), keyFront: key(nid, 'D', d.id, pt) }; });
+      if (rows.length) ym += midBox(d.name, rows, xM, ym, 'D') + GAP;
     });
     var H = Math.max(yl, yr, ym, 60) + 14;
 
@@ -685,7 +846,7 @@
     });
 
     var head = svgText(8, 14, node.name || nid, { bold: true, size: 11 });
-    var legend = svgText(8, H - 8, 'Coloured lines: fusion splices (□ = splice, T = tray) · thick lines: express fibres, not cut · yellow loops: LC patch leads · dashed: assumed', { size: 8, fill: '#666' });
+    var legend = compact ? '' : svgText(8, H - 8, 'Coloured lines: fusion splices (□ = splice, T = tray) · thick lines: express fibres, not cut · yellow loops: LC patch leads · dashed: assumed', { size: 8, fill: '#666' });
     return '<svg class="fx-svg" xmlns="http://www.w3.org/2000/svg" style="max-width:' + W + 'px" viewBox="0 0 ' + W + ' ' + H +
       '" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">' + '<rect width="100%" height="100%" fill="#fff"/>' + head + '<g class="L-lines">' + lines.join('') + '</g><g class="L-boxes">' + out.join('') + '</g><g class="L-patches">' + arcs.join('') + '</g>' + legend + '</svg>';
   }
@@ -711,8 +872,12 @@
     });
   }
   function wirePatchHover(container) {
-    var svg = container && container.querySelector('.fx-svg');
-    if (!svg || svg._wired) return;
+    if (!container) return;
+    Array.prototype.forEach.call(container.querySelectorAll('.fx-svg'), wireSvg);
+    if (hlLocked !== null) markAll(hlLocked);
+  }
+  function wireSvg(svg) {
+    if (svg._wired) return;
     svg._wired = true;
     Array.prototype.forEach.call(svg.querySelectorAll('.fxe'), function (g) {
       g.addEventListener('mouseenter', function () { if (hlLocked === null) markAll(g.getAttribute('data-c')); });
@@ -971,6 +1136,7 @@
       window.FibreNet.cableOpened(cid);
     }
     if (b.getAttribute('data-fx') === 'schem-net') showNetworkSchematic();
+    if (b.getAttribute('data-fx') === 'schem-splices') showAllSplices();
     if (b.getAttribute('data-fx') === 'schem-cable') {
       var sid = b.getAttribute('data-id'), sc0 = net.cables[sid];
       window.SiteMap.highlightIds([sid], true);

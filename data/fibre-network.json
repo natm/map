@@ -160,8 +160,8 @@
           "kind": "patch",
           "a": "P:38",
           "b": "MC:sfp1",
-          "note": "F03 fibre 3 is the 1G BiDi circuit to the barn (Nat, 2026-11-06); that it lands on the media converter's SFP is assumed",
-          "assumed": true
+          "note": "F03 fibre 3 is the 1G BiDi circuit to the barn; it lands on the media converter's SFP (both confirmed by Nat, 2026-11-06)",
+          "assumed": false
         }
       ],
       "devices": [
