@@ -288,7 +288,7 @@
     },
     "MH01-SC": {
       "name": "Barn manhole splice closure",
-      "where": "CommScope inline closure in the manhole outside the barn",
+      "where": "CommScope inline closure in MH01, the front-left manhole inside the barn",
       "documented": false,
       "layout": {
         "left": [

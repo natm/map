@@ -114,7 +114,7 @@
       "type": "Feature",
       "properties": {
         "id": "MH01-SC",
-        "name": "Barn manhole: CommScope splice closure",
+        "name": "Barn front left manhole (MH01): CommScope splice closure",
         "type": "splice",
         "enclosure": "splice_closure",
         "cables": "F09, F10, F12, F13",

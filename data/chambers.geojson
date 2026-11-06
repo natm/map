@@ -5,9 +5,9 @@
       "type": "Feature",
       "properties": {
         "id": "MH01",
-        "name": "Barn manhole",
+        "name": "Barn front left manhole",
         "type": "manhole",
-        "notes": "Outside the barn by the roller doors. Holds the CommScope splice closure MH01-SC (barn rack to treehouse, greenhouse and workshop). F08 (barn to shed) passes through unspliced.",
+        "notes": "Inside the barn by the roller doors. Holds the CommScope splice closure MH01-SC (barn rack to treehouse, greenhouse and workshop). F08 (barn to shed) passes through unspliced.",
         "doc": "fibre.md#-manholes-and-chambers",
         "source": "Nat, placed in geojson.io",
         "method": "aerial-trace",
@@ -17,6 +17,276 @@
       "geometry": {
         "type": "Point",
         "coordinates": [-5.067031, 51.938332]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH02",
+        "name": "Barn front right manhole",
+        "type": "manhole",
+        "notes": "Inside the barn by the power distribution and network map.",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.066897, 51.938291]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH03",
+        "name": "Barn rear right manhole",
+        "type": "manhole",
+        "notes": "Inside the barn.",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-06",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.06694, 51.938246]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH04",
+        "name": "Barn rear left manhole",
+        "type": "manhole",
+        "notes": "Inside the barn by the steps to raised area",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067068, 51.938288]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH05",
+        "name": "Outdoor barn",
+        "type": "manhole",
+        "notes": "Outside barn by the hose pipe",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.06707, 51.938342]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH06",
+        "name": "Junction",
+        "type": "manhole",
+        "notes": "In the grass on the raised junction",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.06714, 51.938378]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH07",
+        "name": "Front wall",
+        "type": "manhole",
+        "notes": "By the front garden wall",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.066941, 51.938513]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH08",
+        "name": "Behind wall",
+        "type": "manhole",
+        "notes": "Behind the wall",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.066631, 51.938726]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH09",
+        "name": "Greenhouse",
+        "type": "manhole",
+        "notes": "Outside the greenhouse",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.066372, 51.938783]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH10",
+        "name": "Shed",
+        "type": "manhole",
+        "notes": "Outside the shed",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067466, 51.938482]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH11",
+        "name": "Parking area",
+        "type": "manhole",
+        "notes": "In the side parking area",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067595, 51.938539]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH12",
+        "name": "Woods halfway",
+        "type": "manhole",
+        "notes": "Halfway in the woods",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.068357, 51.939017]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH13",
+        "name": "Woods cabinet",
+        "type": "manhole",
+        "notes": "Woods cabinet",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.068102, 51.938812]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH14",
+        "name": "Neighbors field entrance",
+        "type": "manhole",
+        "notes": "Entrance to the neighbors field",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.068291, 51.93853]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH15",
+        "name": "Cottage 2",
+        "type": "manhole",
+        "notes": "Outside cottage 2",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.067982, 51.938352]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "MH16",
+        "name": "Llwyn Dewi",
+        "type": "manhole",
+        "notes": "Outside Llwyn Dewi",
+        "doc": "fibre.md#-manholes-and-chambers",
+        "source": "Nat, placed in geojson.io",
+        "method": "aerial-trace",
+        "surveyed": "2026-11-05",
+        "accuracy_m": 2
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-5.068001, 51.938458]
       }
     }
   ]
