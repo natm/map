@@ -95,7 +95,21 @@
       "name": "Barn manhole closure to the greenhouse",
       "fibres": 8,
       "a": "MH01-SC",
-      "b": "GREENHOUSE"
+      "b": "GREENHOUSE",
+      "route": [
+        "MH01-SC",
+        "MH01",
+        "MH01-MH06/1",
+        "MH06",
+        "MH06-MH07/1",
+        "MH07",
+        "MH07-MH08/1",
+        "MH08",
+        "MH08-MH09/1",
+        "MH09",
+        "GREENHOUSE"
+      ],
+      "route_source": "Nat, 2026-11-07"
     },
     "F13": {
       "name": "Barn manhole closure to the workshop",
