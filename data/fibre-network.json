@@ -115,7 +115,16 @@
       "name": "Barn manhole closure to the workshop",
       "fibres": 8,
       "a": "MH01-SC",
-      "b": "WORKSHOP"
+      "b": "WORKSHOP",
+      "route": [
+        "MH01-SC",
+        "MH01",
+        "MH01-MH04/1",
+        "MH04",
+        "MH04-WORKSHOP/1",
+        "WORKSHOP"
+      ],
+      "route_source": "Nat, 2026-11-07"
     }
   },
   "nodes": {
